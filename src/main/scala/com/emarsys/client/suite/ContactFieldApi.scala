@@ -11,7 +11,7 @@ import com.emarsys.escher.akka.http.config.EscherConfig
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
-private[suite] trait ContactFieldApi extends SuiteClient {
+trait ContactFieldApi extends SuiteClient {
 
   import ContactFieldApi._
 

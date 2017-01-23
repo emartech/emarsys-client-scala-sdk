@@ -10,7 +10,7 @@ import com.emarsys.client.RestClient
 
 import scala.concurrent.Future
 
-private[suite] trait SuiteClient extends RestClient {
+trait SuiteClient extends RestClient {
 
   import SuiteClient._
 

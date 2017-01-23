@@ -11,7 +11,7 @@ import com.emarsys.client.suite.DataTransformers._
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
-private[suite] trait ContactApi extends SuiteClient {
+trait ContactApi extends SuiteClient {
 
   def getData(customerId: Int, entity: GetDataRequest): Future[GetDataResponse] = {
     val path    = "contact/getdata"

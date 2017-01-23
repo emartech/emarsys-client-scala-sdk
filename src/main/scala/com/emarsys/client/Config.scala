@@ -14,4 +14,10 @@ object Config {
     val serviceName  = "suiteApi"
   }
 
+  object predictConfig {
+    val predictConfig = config.getConfig("ems-api.predict")
+    val host          = predictConfig.getString("host")
+    val port          = predictConfig.getInt("port")
+    val serviceName   = "predict"
+  }
 }

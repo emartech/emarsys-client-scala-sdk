@@ -11,7 +11,7 @@ import com.emarsys.escher.akka.http.config.EscherConfig
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
-private[suite] trait SegmentApi extends SuiteClient {
+trait SegmentApi extends SuiteClient {
 
   import SegmentApi._
 
