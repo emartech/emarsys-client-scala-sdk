@@ -265,7 +265,7 @@ class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with 
         if validLoadProductUri(uri) && validPath(uri)("productinfo/merchants/invalidProduct/") =>
       HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, invalidProduct))
 
-    case r @ HttpRequest(HttpMethods.GET, uri, _, _, _) =>
+    case r @ HttpRequest(HttpMethods.GET, _, _, _, _) =>
       system.log.error("Unexpected request: {}", r)
       HttpResponse(InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, ""))
   }
