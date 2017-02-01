@@ -45,6 +45,11 @@ trait ContactFieldApi extends SuiteClient {
     case Right(d) => ListResponse(d)
     case Left(_)  => ListResponse(Nil)
   }
+
+  def createField(customerId: Int, payload: CreateFieldRequest): Future[CreateFieldResponse] = {
+    val request = RequestBuilding.Post(Uri(baseUrl(customerId) + "field"), payload)
+    run[CreateFieldResponse](request) map (_.data)
+  }
 }
 
 object ContactFieldApi {
@@ -52,6 +57,9 @@ object ContactFieldApi {
   final case class FieldItem(id: Int, name: String, application_type: String, string_id: String)
   final case class ListResponse(data: List[FieldItem])
   type ListRawResponseData = Either[String, List[FieldItem]]
+
+  final case class CreateFieldRequest(name: String, application_type: String, string_id: Option[String])
+  final case class CreateFieldResponse(id: Int)
 
   def apply(eConfig: EscherConfig)(implicit sys: ActorSystem, mat: Materializer, ex: ExecutionContextExecutor) =
     new SuiteClient with ContactFieldApi {

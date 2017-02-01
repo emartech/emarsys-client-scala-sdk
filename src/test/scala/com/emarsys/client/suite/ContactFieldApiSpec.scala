@@ -5,7 +5,7 @@ import akka.http.scaladsl.model._
 import akka.stream.scaladsl.Flow
 import akka.stream.{ActorMaterializer, Materializer}
 import akka.http.scaladsl.model.StatusCodes._
-import com.emarsys.client.suite.ContactFieldApi.FieldItem
+import com.emarsys.client.suite.ContactFieldApi.{CreateFieldRequest, CreateFieldResponse, FieldItem}
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory
 import org.scalatest.concurrent.ScalaFutures
@@ -128,6 +128,33 @@ class ContactFieldApiSpec extends AsyncWordSpec with Matchers with ScalaFutures 
       "return failure in case of failed response" in {
         recoverToSucceededIf[Exception] {
           contactField(Unauthorized, invalidResponse).list(customerId)
+        }
+      }
+    }
+  }
+
+  "create custom field called" when {
+
+    "valid response" should {
+      "field id returned" in {
+        val validResult = """{
+                                |  "replyCode": 0,
+                                |  "replyText": "OK",
+                                |  "data":
+                                |  {
+                                |    "id": 111112222
+                                |  }
+                                |}""".stripMargin
+        contactField(OK, validResult).createField(123, CreateFieldRequest("field1", "app", None)) map { response =>
+          response shouldEqual CreateFieldResponse(111112222)
+        }
+      }
+    }
+
+    "invalid response" should {
+      "exception raised" in {
+        recoverToSucceededIf[Exception] {
+          contactField(OK, invalidResponse).createField(123, CreateFieldRequest("field1", "app", None))
         }
       }
     }
