@@ -19,7 +19,6 @@ trait ContactApi extends SuiteClient {
 
     run[GetDataRawResponseData](request) map getDataResponseTransformer
   }
-
 }
 
 object ContactApi {

@@ -50,7 +50,7 @@ class ContactFieldApiSpec extends AsyncWordSpec with Matchers with ScalaFutures 
                         |    },
                         |    {
                         |      "id": 9,
-                        |      "name": "Title",
+                        |      "name": null,
                         |      "application_type": "single choice",
                         |      "string_id": ""
                         |    },
@@ -76,10 +76,10 @@ class ContactFieldApiSpec extends AsyncWordSpec with Matchers with ScalaFutures 
       "return existing fields in case of successful response" in {
         contactField(OK, validResponse).list(customerId) map { response =>
           response.data shouldEqual List(
-            FieldItem(0, "Interests", "interests", "interests"),
-            FieldItem(9, "Title", "single choice", ""),
-            FieldItem(11, "Predict something", "simple", ""),
-            FieldItem(13, "another predict", "multi choice", "")
+            FieldItem(0, Some("Interests"), "interests", "interests"),
+            FieldItem(9, None, "single choice", ""),
+            FieldItem(11, Some("Predict something"), "simple", ""),
+            FieldItem(13, Some("another predict"), "multi choice", "")
           )
         }
       }
@@ -87,10 +87,10 @@ class ContactFieldApiSpec extends AsyncWordSpec with Matchers with ScalaFutures 
       "return translated existing fields for in case of successful response" in {
         contactField(OK, validResponse).list(customerId, "en") map { response =>
           response.data shouldEqual List(
-            FieldItem(0, "Interests", "interests", "interests"),
-            FieldItem(9, "Title", "single choice", ""),
-            FieldItem(11, "Predict something", "simple", ""),
-            FieldItem(13, "another predict", "multi choice", "")
+            FieldItem(0, Some("Interests"), "interests", "interests"),
+            FieldItem(9, None, "single choice", ""),
+            FieldItem(11, Some("Predict something"), "simple", ""),
+            FieldItem(13, Some("another predict"), "multi choice", "")
           )
         }
       }
@@ -98,8 +98,8 @@ class ContactFieldApiSpec extends AsyncWordSpec with Matchers with ScalaFutures 
       "return predict fields for customer" in {
         contactField(OK, validResponse).listPredictFields(customerId) map { response =>
           response.data shouldEqual List(
-            FieldItem(11, "Predict something", "simple", ""),
-            FieldItem(13, "another predict", "multi choice", "")
+            FieldItem(11, Some("Predict something"), "simple", ""),
+            FieldItem(13, Some("another predict"), "multi choice", "")
           )
         }
       }
@@ -107,8 +107,8 @@ class ContactFieldApiSpec extends AsyncWordSpec with Matchers with ScalaFutures 
       "return translated predict fields for customer" in {
         contactField(OK, validResponse).listPredictFields(customerId, "en") map { response =>
           response.data shouldEqual List(
-            FieldItem(11, "Predict something", "simple", ""),
-            FieldItem(13, "another predict", "multi choice", "")
+            FieldItem(11, Some("Predict something"), "simple", ""),
+            FieldItem(13, Some("another predict"), "multi choice", "")
           )
         }
       }

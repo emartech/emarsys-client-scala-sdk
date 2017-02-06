@@ -39,7 +39,7 @@ trait ContactFieldApi extends SuiteClient {
     run[ListRawResponseData](request) map listResponseTransformer
   }
 
-  private def predictFilter(fields: ListResponse) = fields.copy(data = fields.data.filter(_.name.toLowerCase contains "predict"))
+  private def predictFilter(fields: ListResponse) = fields.copy(data = fields.data.filter(_.name.getOrElse("").toLowerCase contains "predict"))
 
   val listResponseTransformer: (SuiteRawResponse[ListRawResponseData]) => ListResponse = r => r.data match {
     case Right(d) => ListResponse(d)
@@ -54,7 +54,7 @@ trait ContactFieldApi extends SuiteClient {
 
 object ContactFieldApi {
 
-  final case class FieldItem(id: Int, name: String, application_type: String, string_id: String)
+  final case class FieldItem(id: Int, name: Option[String], application_type: String, string_id: String)
   final case class ListResponse(data: List[FieldItem])
   type ListRawResponseData = Either[String, List[FieldItem]]
 
