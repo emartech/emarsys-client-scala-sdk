@@ -34,5 +34,4 @@ libraryDependencies ++= {
 }
 
 publishTo := Some(Resolver.file("releases", new File("releases")))
-
 scalaVersion in ThisBuild := scalaV
