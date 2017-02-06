@@ -49,7 +49,8 @@ class ContactApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
                             |        "uid": "abc",
                             |        "0": null,
                             |        "1": "Peter",
-                            |        "100007887": null
+                            |        "100007887": null,
+                            |        "multi": [1]
                             |      }
                             |    ]
                             |  }
@@ -81,11 +82,13 @@ class ContactApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
       "return existing fields in case of successful response" in {
         contactApi(OK, validResponse).getData(customerId, GetDataRequest("id", Nil, None)) map { response =>
           response.data shouldEqual GetDataResult(List(
-                                                    Map("id"        -> Some("123"),
-                                                        "uid"       -> Some("abc"),
-                                                        "0"         -> None,
-                                                        "1"         -> Some("Peter"),
-                                                        "100007887" -> None)
+                                                    Map("id"        -> Left(Some("123")),
+                                                        "uid"       -> Left(Some("abc")),
+                                                        "0"         -> Left(None),
+                                                        "1"         -> Left(Some("Peter")),
+                                                        "100007887" -> Left(None),
+                                                        "multi"     -> Right(List(1))
+                                                    )
                                                   ),
                                                   Nil)
         }

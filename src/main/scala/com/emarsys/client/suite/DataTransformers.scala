@@ -3,7 +3,8 @@ package com.emarsys.client.suite
 import com.emarsys.client.suite.SuiteClient.SuiteRawResponse
 
 object DataTransformers {
-  type GetDataResultPart = List[Map[String, Option[String]]]
+  type FieldValue        = Either[Option[String], List[Int]]
+  type GetDataResultPart = List[Map[String, FieldValue]]
 
   final case class GetDataRequest(keyId: String, keyValues: List[String], fields: Option[List[String]])
   final case class GetDataResponse(data: GetDataResult)
