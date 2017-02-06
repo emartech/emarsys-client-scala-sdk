@@ -20,7 +20,7 @@ scalacOptions ++= Seq(
 resolvers += "escher-akka-http on GitHub" at "https://raw.github.com/emartech/escher-akka-http/master/releases"
 
 libraryDependencies ++= {
-  val akkaHttpV   = "10.0.1"
+  val akkaHttpV   = "10.0.3"
   val scalaTestV  = "3.0.1"
   Seq(
     "com.typesafe.akka"     %% "akka-http-core"       % akkaHttpV,

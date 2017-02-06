@@ -271,7 +271,7 @@ class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with 
   }
 
   val validPath = (u: Uri) => u.path.toString endsWith _
-  val validHost = (u: Uri) => u.scheme == "https" && u.authority.toString == "//recommender.scarabresearch.com:443"
+  val validHost = (u: Uri) => u.scheme == "https" && u.authority.toString == "recommender.scarabresearch.com:443"
 
   val validRecommendationUri = (u: Uri) => {
     u.rawQueryString.fold(false) { p =>
