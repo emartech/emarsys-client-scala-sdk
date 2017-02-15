@@ -29,7 +29,8 @@ libraryDependencies ++= {
     "com.github.fommil"     %% "spray-json-shapeless" % "1.3.0",
     "org.slf4j"             %  "slf4j-nop"            % "1.6.4",
     "org.scalatest"         %% "scalatest"            % scalaTestV % "test",
-    "com.emarsys"           %% "escher-akka-http"     % "0.1.0"
+    "com.emarsys"           %% "escher-akka-http"     % "0.1.0",
+    "joda-time"             %  "joda-time"            % "2.9.1"
   )
 }
 

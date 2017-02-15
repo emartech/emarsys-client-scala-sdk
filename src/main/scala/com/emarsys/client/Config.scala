@@ -20,4 +20,12 @@ object Config {
     val port          = predictConfig.getInt("port")
     val serviceName   = "predict"
   }
+
+  object segmentRegistryConfig {
+    val registryConfig = config.getConfig("ems-api.segment-registry")
+    val host           = registryConfig.getString("host")
+    val port           = registryConfig.getInt("port")
+    val serviceName    = "segment-registry"
+  }
+
 }
