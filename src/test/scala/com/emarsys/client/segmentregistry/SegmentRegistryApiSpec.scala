@@ -26,7 +26,7 @@ class SegmentRegistryApiSpec extends AsyncWordSpec with Matchers with ScalaFutur
   implicit val defaultPatience = PatienceConfig(timeout = Span(2, Seconds), interval = Span(100, Millis))
 
   val escherConfig = new EscherConfig(ConfigFactory.load().getConfig("ems-api.escher"))
-  val segmentCreated = DateTime.now.toDateTime(DateTimeZone.UTC)
+  val segmentCreated = DateTime.now.toDateTime(DateTimeZone.UTC).withMillisOfSecond(0)
   val criteriaTypes = Seq("contact", "behavior")
 
   val customerId = 101
@@ -118,7 +118,7 @@ class SegmentRegistryApiSpec extends AsyncWordSpec with Matchers with ScalaFutur
       HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, response.toJson.compactPrint))
 
     case HttpRequest(HttpMethods.PUT, uri, _, _, _) if validPath(uri)(s"customers/$invalidDateFormatCustomerId/segments") =>
-      val responseString = validResponse.toJson.compactPrint.replace(segmentCreated.toString, "invalid")
+      val responseString = validResponse.toJson.compactPrint.replace(segmentCreated.toString(dateTimePattern), "invalid")
       HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, responseString))
 
     case HttpRequest(HttpMethods.PUT, uri, _, _, _) if validPath(uri)(s"customers/$invalidResponseCodeCustomerId/segments") =>
