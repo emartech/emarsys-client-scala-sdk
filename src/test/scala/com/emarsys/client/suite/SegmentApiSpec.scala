@@ -4,6 +4,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
 import akka.stream.scaladsl.Flow
 import akka.stream.{ActorMaterializer, Materializer}
+import com.emarsys.client.RestClientException
 import com.emarsys.client.suite.SegmentApi.{BehaviorCriteriaLeaf, ContactCriteriaLeaf, CreateRequest}
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory
@@ -59,7 +60,7 @@ class SegmentApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
       }
 
       "return with validation error response" in {
-        recoverToSucceededIf[Exception] {
+        recoverToSucceededIf[RestClientException] {
           segmentApi(StatusCodes.BadRequest, validationFailedResponse).create(
             customerId,
             CreateRequest("segment", Some(ContactCriteriaLeaf("criteria", Right("email"), "contains", "@gmail.com")), Some(BehaviorCriteriaLeaf("criteria")), "", None))

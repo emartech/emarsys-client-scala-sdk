@@ -30,7 +30,7 @@ trait RestClient extends EscherDirectives {
             case Success(_) => Unmarshal(response.entity).to[S]
             case status     => Unmarshal(response.entity).to[String].map { responseBody =>
               system.log.error("Request to {} failed with status: {} / body: {}", request.uri, status, responseBody)
-              throw new Exception(s"Rest client request failed for ${request.uri}")
+              throw RestClientException(s"Rest client request failed for ${request.uri}", status.intValue, responseBody)
             }
           }
     } yield result

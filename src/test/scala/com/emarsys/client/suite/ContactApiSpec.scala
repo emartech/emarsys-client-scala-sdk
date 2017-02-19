@@ -10,6 +10,7 @@ import com.typesafe.config.ConfigFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{AsyncWordSpec, Matchers}
 import DataTransformers._
+import com.emarsys.client.RestClientException
 
 import scala.concurrent.ExecutionContextExecutor
 
@@ -110,7 +111,7 @@ class ContactApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
       }
 
       "return failure in case of non-success status code" in {
-        recoverToSucceededIf[Exception] {
+        recoverToSucceededIf[RestClientException] {
           contactApi(Unauthorized, emptyDataResponse).getData(customerId, GetDataRequest("id", Nil, None))
         }
       }

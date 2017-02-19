@@ -7,6 +7,7 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.StatusCodes._
 import akka.stream.scaladsl.Flow
 import akka.stream.ActorMaterializer
+import com.emarsys.client.RestClientException
 import com.emarsys.client.predict.PredictApi.{PredictIdentityAuth, PredictIdentityHash, Recommendation}
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory
@@ -108,7 +109,7 @@ class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with 
         }
 
         "is unauthorized" in {
-          recoverToSucceededIf[Exception] {
+          recoverToSucceededIf[RestClientException] {
             recommendations("unauthorizedResponse", Some(PredictIdentityHash(emailHash, secret)))
           }
         }

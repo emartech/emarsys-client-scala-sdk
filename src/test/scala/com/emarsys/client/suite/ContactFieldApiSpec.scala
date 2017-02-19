@@ -5,6 +5,7 @@ import akka.http.scaladsl.model._
 import akka.stream.scaladsl.Flow
 import akka.stream.{ActorMaterializer, Materializer}
 import akka.http.scaladsl.model.StatusCodes._
+import com.emarsys.client.RestClientException
 import com.emarsys.client.suite.ContactFieldApi.{CreateFieldRequest, CreateFieldResponse, FieldItem}
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory
@@ -120,13 +121,13 @@ class ContactFieldApiSpec extends AsyncWordSpec with Matchers with ScalaFutures 
       }
 
       "return empty list for data in case of empty data response and unsuccessful http status" in {
-        recoverToSucceededIf[Exception] {
+        recoverToSucceededIf[RestClientException] {
           contactField(Unauthorized, emptyDataResponse).list(customerId, "en")
         }
       }
 
       "return failure in case of failed response" in {
-        recoverToSucceededIf[Exception] {
+        recoverToSucceededIf[RestClientException] {
           contactField(Unauthorized, invalidResponse).list(customerId)
         }
       }
