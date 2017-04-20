@@ -2,7 +2,7 @@ val scalaV = "2.12.1"
 
 name         := "emarsys-client-scala-sdk"
 organization := "com.emarsys"
-version      := "0.0.7"
+version      := "0.0.8"
 scalaVersion := scalaV
 
 scalacOptions ++= Seq(
@@ -20,7 +20,7 @@ scalacOptions ++= Seq(
 resolvers += "escher-akka-http on GitHub" at "https://raw.github.com/emartech/escher-akka-http/master/releases"
 
 libraryDependencies ++= {
-  val akkaHttpV   = "10.0.3"
+  val akkaHttpV   = "10.0.5"
   val scalaTestV  = "3.0.1"
   Seq(
     "com.typesafe.akka"     %% "akka-http-core"       % akkaHttpV,

@@ -2,7 +2,7 @@ package com.emarsys.client
 
 import com.typesafe.config.ConfigFactory
 
-object Config {
+trait Config {
 
   private val config = ConfigFactory.load()
 
@@ -28,4 +28,7 @@ object Config {
     val serviceName    = "segment-registry"
   }
 
+  val restClientRetryCount = config.getInt("ems-api.clientRetryCount")
 }
+
+object Config extends Config

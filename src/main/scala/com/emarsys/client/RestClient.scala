@@ -17,22 +17,26 @@ trait RestClient extends EscherDirectives {
 
   val connectionFlow: Flow[HttpRequest, HttpResponse, _]
   val serviceName: String
+  lazy val maxRetryCount: Int = 0
 
   protected def sendRequest(request: HttpRequest): Future[HttpResponse] = {
     Source.single(request).via(connectionFlow).runWith(Sink.head)
   }
 
-  def runRaw[S](request: HttpRequest)(implicit um: Unmarshaller[ResponseEntity, S]): Future[S] = {
+  def runRaw[S](request: HttpRequest, retry: Int = maxRetryCount)(implicit um: Unmarshaller[ResponseEntity, S]): Future[S] = {
     for {
-    signed   <- signRequest(serviceName)(executor, materializer)(request)
-    response <- sendRequest(signed)
-    result   <- response.status match {
-            case Success(_) => Unmarshal(response.entity).to[S]
-            case status     => Unmarshal(response.entity).to[String].map { responseBody =>
-              system.log.error("Request to {} failed with status: {} / body: {}", request.uri, status, responseBody)
-              throw RestClientException(s"Rest client request failed for ${request.uri}", status.intValue, responseBody)
+      signed   <- signRequest(serviceName)(executor, materializer)(request)
+      response <- sendRequest(signed)
+      result   <- response.status match {
+              case Success(_) => Unmarshal(response.entity).to[S]
+              case ServerError(_) if retry > 0 =>
+                system.log.info("Retrying request: {} / {} attempt(s) left", request.uri, retry - 1)
+                runRaw[S](request, retry - 1)
+              case status => Unmarshal(response.entity).to[String].map { responseBody =>
+                system.log.error("Request to {} failed with status: {} / body: {}", request.uri, status, responseBody)
+                throw RestClientException(s"Rest client request failed for ${request.uri}", status.intValue, responseBody)
+              }
             }
-          }
-    } yield result
-  }
+      } yield result
+    }
 }
