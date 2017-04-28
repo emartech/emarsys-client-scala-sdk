@@ -25,6 +25,10 @@ trait SegmentRegistryApi extends RestClient {
 
   lazy val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Http().outgoingConnectionHttps(segmentRegistryConfig.host)
 
+  def create(customerId: Int, segmentData: SegmentData): Future[SegmentRegistryRecord] = {
+    val path = s"/customers/$customerId/segments"
+    runRaw[SegmentRegistryRecord](RequestBuilding.Post(Uri(baseUrl + path), segmentData))
+  }
   def update(customerId: Int, segmentData: SegmentData): Future[SegmentRegistryRecord] = {
     val path = s"/customers/$customerId/segments"
     runRaw[SegmentRegistryRecord](RequestBuilding.Put(Uri(baseUrl + path), segmentData))

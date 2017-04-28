@@ -35,6 +35,7 @@ class SegmentRegistryApiSpec extends AsyncWordSpec with Matchers with ScalaFutur
   val invalidDateFormatCustomerId = 103
 
   val mandatoryOnlySegmentId = 100
+  val createSegmentId = 200
 
   val validResponse = SegmentRegistryRecord(
     id = 1,
@@ -60,7 +61,7 @@ class SegmentRegistryApiSpec extends AsyncWordSpec with Matchers with ScalaFutur
 
   "SegmentRegistryApi" should {
 
-    "respond with segment record" when {
+    "update responds with segment record" when {
 
       "proper segment data is sent" in {
         update(customerId, segmentData).map {
@@ -87,11 +88,37 @@ class SegmentRegistryApiSpec extends AsyncWordSpec with Matchers with ScalaFutur
 
     }
 
-    "returned failed future" when {
+    "update returns failed future" when {
 
       "response code is invalid" in {
         recoverToSucceededIf[RestClientException] {
           update(invalidResponseCodeCustomerId, segmentData)
+        }
+      }
+
+      "date format is invalid in response" in {
+        recoverToSucceededIf[IllegalArgumentException] {
+          update(invalidDateFormatCustomerId, segmentData)
+        }
+      }
+
+    }
+
+    "create responds with segment record" when {
+
+      "proper segment data is sent" in {
+        create(customerId, segmentData.copy(id = createSegmentId)).map {
+          _ shouldEqual validResponse
+        }
+      }
+
+    }
+
+    "create returns failed future" when {
+
+      "response code is invalid" in {
+        recoverToSucceededIf[RestClientException] {
+          create(customerId, segmentData)
         }
       }
 
@@ -119,12 +146,27 @@ class SegmentRegistryApiSpec extends AsyncWordSpec with Matchers with ScalaFutur
       HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, response.toJson.compactPrint))
 
     case HttpRequest(HttpMethods.PUT, uri, _, _, _) if validPath(uri)(s"customers/$invalidDateFormatCustomerId/segments") =>
-      val responseString = validResponse.toJson.compactPrint.replace(segmentCreated.toString(dateTimePattern), "invalid")
-      HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, responseString))
+      respondWithInvalidDate
 
     case HttpRequest(HttpMethods.PUT, uri, _, _, _) if validPath(uri)(s"customers/$invalidResponseCodeCustomerId/segments") =>
       HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, validResponse.toJson.compactPrint))
 
+    case HttpRequest(HttpMethods.POST, uri, _, entity, _) if validPath(uri)(s"customers/$customerId/segments") =>
+      val segment = Unmarshal(entity).to[SegmentData].futureValue
+      if (segment.id == createSegmentId) {
+        HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, validResponse.toJson.compactPrint))
+      } else {
+        HttpResponse(StatusCodes.InternalServerError)
+      }
+
+    case HttpRequest(HttpMethods.POST, uri, _, _, _) if validPath(uri)(s"customers/$invalidDateFormatCustomerId/segments") =>
+      respondWithInvalidDate
+
+  }
+
+  private def respondWithInvalidDate = {
+    val responseString = validResponse.toJson.compactPrint.replace(segmentCreated.toString(dateTimePattern), "invalid")
+    HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, responseString))
   }
 
   val validPath = (u: Uri) => u.path.toString endsWith _
