@@ -42,7 +42,7 @@ trait SegmentRegistryApi extends RestClient {
 
 object SegmentRegistryApi {
 
-  case class SegmentData(id: Int, name: String, segmentType: String, criteriaTypes: Option[Seq[String]] = None, baseContactListId: Option[Int] = None, predefined: Option[Boolean] = None)
+  case class SegmentData(id: Int, name: String, segmentType: String, criteriaTypes: Option[Seq[String]] = None, baseContactListId: Option[Int] = None, predefined: Option[Boolean] = None, predefinedSegmentId: Option[String] = None)
 
   case class SegmentRegistryRecord(id: Int, originalId: Int, customerId: Int, segmentType: String, name: String, created: DateTime, updated: DateTime, criteriaTypes: Seq[String], baseContactListId: Int, predefined: Boolean)
 
