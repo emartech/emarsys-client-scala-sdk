@@ -5,7 +5,7 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.stream.scaladsl.Flow
-import com.emarsys.client.Config.suiteConfig
+import com.emarsys.client.Config.emsApi.suite
 import com.emarsys.client.RestClient
 
 import scala.concurrent.Future
@@ -14,13 +14,14 @@ trait SuiteClient extends RestClient {
 
   import SuiteClient._
 
-  val serviceName = suiteConfig.serviceName
-  lazy val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Http().outgoingConnectionHttps(suiteConfig.host)
+
+  val serviceName = suite.serviceName
+  lazy val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Http().outgoingConnectionHttps(suite.host)
 
   protected def createCustomerHeader(customerId: Int) = RawHeader("X-SUITE-CUSTOMERID", customerId.toString)
 
   def baseUrl(customerId: Int) =
-    s"https://${suiteConfig.host}:${suiteConfig.port}${suiteConfig.suiteApiPath}/$customerId/"
+    s"${suite.protocol}://${suite.host}:${suite.port}${suite.apiPath}/$customerId/"
 
   def run[S](request: HttpRequest)(implicit um: Unmarshaller[ResponseEntity, SuiteRawResponse[S]]): Future[SuiteRawResponse[S]] =
     runRaw[SuiteRawResponse[S]](request)

@@ -12,7 +12,7 @@ import com.emarsys.escher.akka.http.config.EscherConfig
 import spray.json._
 import fommil.sjs.FamilyFormats._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import com.emarsys.client.Config.predictConfig
+import com.emarsys.client.Config.emsApi.predict
 import com.emarsys.client.RestClient
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
@@ -30,9 +30,10 @@ trait PredictApi extends RestClient {
     }
   }
 
-  val serviceName = predictConfig.serviceName
-  val baseUrl     = s"https://${predictConfig.host}:${predictConfig.port}"
-  lazy val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Http().outgoingConnectionHttps(predictConfig.host)
+
+  val serviceName = predict.serviceName
+  val baseUrl     = s"${predict.protocol}://${predict.host}:${predict.port}"
+  lazy val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Http().outgoingConnectionHttps(predict.host)
 
   override def signRequest(serviceName: String)(implicit ec: ExecutionContext, mat: Materializer) =
     r => Future.successful(r)

@@ -10,7 +10,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import com.emarsys.formats.JodaDateTimeFormat._
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse, Uri}
 import akka.stream.scaladsl.Flow
-import com.emarsys.client.Config.segmentRegistryConfig
+import com.emarsys.client.Config.emsApi.segmentRegistry
 import org.joda.time.DateTime
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -19,11 +19,12 @@ trait SegmentRegistryApi extends RestClient {
 
   import SegmentRegistryApi._
 
-  val serviceName = segmentRegistryConfig.serviceName
 
-  val baseUrl = s"https://${segmentRegistryConfig.host}:${segmentRegistryConfig.port}"
+  val serviceName = segmentRegistry.serviceName
 
-  lazy val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Http().outgoingConnectionHttps(segmentRegistryConfig.host)
+  val baseUrl = s"${segmentRegistry.protocol}://${segmentRegistry.host}:${segmentRegistry.port}"
+
+  lazy val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Http().outgoingConnectionHttps(segmentRegistry.host)
 
   def create(customerId: Int, segmentData: SegmentData): Future[SegmentRegistryRecord] = {
     upsert(customerId, segmentData, RequestBuilding.Post)
