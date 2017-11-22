@@ -14,7 +14,8 @@ trait Config {
                      suite: SuiteConfig,
                      segmentRegistry: SegmentRegistryConfig,
                      predict: PredictConfig,
-                     clientRetryCount: Int
+                     clientRetryCount: Int,
+                     relationalData: RelationalDataConfig
                    )
 
   case class SuiteConfig(
@@ -37,6 +38,12 @@ trait Config {
                                     host: String,
                                     port: Int,
                                     serviceName: String = "segment-registry"
+                                  )
+  case class RelationalDataConfig(
+                                    protocol : String,
+                                    host: String,
+                                    port: Int,
+                                    serviceName: String = "relational-data"
                                   )
 
   val emsApi : EmsApiConfig =  loadConfigOrThrow[EmsApiConfig]("ems-api")
