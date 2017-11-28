@@ -24,7 +24,7 @@ trait RelationalDataApi extends RestClient {
   lazy val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Http().outgoingConnectionHttps(relationalData.host)
 
   def insertIgnore(customerId: Int, tableName: String, payload: Seq[Map[String, String]]) = {
-    val path: String = s"/customers/$customerId/tables/$tableName/records"
+    val path: String = s"/public_api/customers/$customerId/tables/$tableName/records"
 
     val request = RequestBuilding.Post(Uri(baseUrl + path), payload)
 
