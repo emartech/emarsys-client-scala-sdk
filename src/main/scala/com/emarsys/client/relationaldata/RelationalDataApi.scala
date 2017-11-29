@@ -11,6 +11,7 @@ import com.emarsys.escher.akka.http.config.EscherConfig
 import com.emarsys.client.Config.emsApi.relationalData
 import spray.json.DefaultJsonProtocol._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import spray.json.JsValue
 
 import scala.concurrent.ExecutionContextExecutor
 
@@ -21,9 +22,16 @@ trait RelationalDataApi extends RestClient {
   val serviceName = relationalData.serviceName
   val baseUrl = s"${relationalData.protocol}://${relationalData.host}:${relationalData.port}"
 
-  lazy val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Http().outgoingConnectionHttps(relationalData.host)
+  lazy val connectionFlow: Flow[HttpRequest, HttpResponse, _] = {
+    if (relationalData.port == 443) {
+      Http().outgoingConnectionHttps(relationalData.host)
+    } else {
+      println(relationalData)
+      Http().outgoingConnection(relationalData.host, relationalData.port)
+    }
+  }
 
-  def insertIgnore(customerId: Int, tableName: String, payload: Seq[Map[String, String]]) = {
+  def insertIgnore(customerId: Int, tableName: String, payload: Seq[Map[String, JsValue]]) = {
     val path: String = s"/public_api/customers/$customerId/tables/$tableName/records"
 
     val request = RequestBuilding.Post(Uri(baseUrl + path), payload)

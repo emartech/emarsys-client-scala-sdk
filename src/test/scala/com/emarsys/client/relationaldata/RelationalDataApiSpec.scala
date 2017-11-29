@@ -7,6 +7,7 @@ import akka.stream.{ActorMaterializer, Materializer}
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory
 import org.scalatest.{AsyncWordSpec, Matchers}
+import spray.json.JsString
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
@@ -55,8 +56,8 @@ class RelationalDataApiSpec extends AsyncWordSpec with Matchers {
 
       val payload = Seq(
         Map(
-          "cica" -> "cirmos",
-          "kutya" -> "aaaa"
+          "cica" -> JsString("cirmos"),
+          "kutya" -> JsString("aaaa")
         )
       )
       val expectedPayload = """[{"cica":"cirmos","kutya":"aaaa"}])"""
