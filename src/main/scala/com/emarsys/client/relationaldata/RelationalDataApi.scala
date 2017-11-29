@@ -26,7 +26,6 @@ trait RelationalDataApi extends RestClient {
     if (relationalData.port == 443) {
       Http().outgoingConnectionHttps(relationalData.host)
     } else {
-      println(relationalData)
       Http().outgoingConnection(relationalData.host, relationalData.port)
     }
   }
