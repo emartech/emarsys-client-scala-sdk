@@ -5,7 +5,7 @@
     <artifactId>emarsys-client-scala-sdk_2.12</artifactId>
     <packaging>jar</packaging>
     <description>emarsys-client-scala-sdk</description>
-    <version>0.1.2</version>
+    <version>0.1.9</version>
     <name>emarsys-client-scala-sdk</name>
     <organization>
         <name>com.emarsys</name>
@@ -45,7 +45,7 @@
         <dependency>
             <groupId>com.emarsys</groupId>
             <artifactId>escher-akka-http_2.12</artifactId>
-            <version>0.1.0</version>
+            <version>0.1.1</version>
         </dependency>
         <dependency>
             <groupId>joda-time</groupId>
