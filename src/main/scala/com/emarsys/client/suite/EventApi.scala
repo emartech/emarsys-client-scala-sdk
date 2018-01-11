@@ -1,14 +1,18 @@
 package com.emarsys.client.suite
 
+import akka.actor.ActorSystem
 import akka.http.scaladsl.client.RequestBuilding
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model._
+import akka.stream.Materializer
 import com.emarsys.client.suite.EventApi.ExternalEventTrigger
+import com.emarsys.escher.akka.http.config.EscherConfig
 import spray.json.JsValue
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
 trait EventApi extends SuiteClient {
+
   import fommil.sjs.FamilyFormats._
 
   def trigger(customerId: Int, eventId: String, entity: ExternalEventTrigger): Future[Unit] = {
@@ -30,4 +34,17 @@ object EventApi {
     }
   }
 
+  def apply(eConfig: EscherConfig)(
+    implicit
+    sys: ActorSystem,
+    mat: Materializer,
+    ex: ExecutionContextExecutor): EventApi = {
+
+    new EventApi {
+      override implicit val system       = sys
+      override implicit val materializer = mat
+      override implicit val executor     = ex
+      override val escherConfig          = eConfig
+    }
+  }
 }
