@@ -19,7 +19,7 @@ trait EventApi extends SuiteClient {
     val path = s"event/$eventId/trigger"
     val request = RequestBuilding.Post(Uri(baseUrl(customerId) + path), entity.toJsonWithPureSpray)
 
-    run[Option[String]](request).map(_ => ())
+    run[Map[String, String]](request).map(_ => ())
   }
 }
 

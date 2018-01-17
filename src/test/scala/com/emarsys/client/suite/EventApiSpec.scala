@@ -53,6 +53,7 @@ class EventApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
 
   val validResponse =
     """{
+      |  "data": {},
       |  "replyCode": 0,
       |  "replyText": "OK"
       |}""".stripMargin
