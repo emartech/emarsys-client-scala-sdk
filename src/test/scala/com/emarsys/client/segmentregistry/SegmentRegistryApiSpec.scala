@@ -5,11 +5,11 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.StatusCodes.OK
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Flow
-import com.emarsys.client.segmentregistry.SegmentRegistryApi.{SegmentData, SegmentRegistryRecord}
+import com.emarsys.client.segmentregistry.SegmentRegistryApi.{SegmentCreatePayload, SegmentData, SegmentRegistryRecord}
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory
 import org.joda.time.{DateTime, DateTimeZone}
-import org.scalatest.{AsyncWordSpec, Matchers}
+import org.scalatest.{AsyncWordSpec, BeforeAndAfterAll, Matchers}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
 import spray.json._
@@ -19,7 +19,7 @@ import com.emarsys.client.RestClientException
 import com.emarsys.formats.JodaDateTimeFormat._
 
 
-class SegmentRegistryApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with SegmentRegistryApi {
+class SegmentRegistryApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with SegmentRegistryApi with BeforeAndAfterAll {
 
   implicit val system          = ActorSystem("segment-registry-api-test-system")
   implicit val materializer    = ActorMaterializer()
@@ -59,6 +59,16 @@ class SegmentRegistryApiSpec extends AsyncWordSpec with Matchers with ScalaFutur
     Some(true)
   )
 
+  val segmentCreatePayload = SegmentCreatePayload(
+    id = Some(1),
+    name = "segment name",
+    segmentType = "normal",
+    criteriaTypes = Some(criteriaTypes),
+    baseContactListId = Some(0),
+    Some(true)
+  )
+
+
   "SegmentRegistryApi" should {
 
     "update responds with segment record" when {
@@ -85,7 +95,6 @@ class SegmentRegistryApiSpec extends AsyncWordSpec with Matchers with ScalaFutur
           )
         }
       }
-
     }
 
     "update returns failed future" when {
@@ -101,35 +110,41 @@ class SegmentRegistryApiSpec extends AsyncWordSpec with Matchers with ScalaFutur
           update(invalidDateFormatCustomerId, segmentData)
         }
       }
-
     }
 
     "create responds with segment record" when {
 
       "proper segment data is sent" in {
-        create(customerId, segmentData.copy(id = createSegmentId)).map {
+        create(customerId, segmentCreatePayload.copy(id = Some(createSegmentId))).map {
           _ shouldEqual validResponse
         }
       }
 
+      "segment id is not provided" in {
+        create(customerId, segmentCreatePayload.copy(id = None)).map {
+          _ shouldEqual validResponse
+        }
+      }
     }
 
     "create returns failed future" when {
 
       "response code is invalid" in {
         recoverToSucceededIf[RestClientException] {
-          create(customerId, segmentData)
+          create(customerId, segmentCreatePayload)
         }
       }
 
       "date format is invalid in response" in {
         recoverToSucceededIf[IllegalArgumentException] {
-          update(invalidDateFormatCustomerId, segmentData)
+          create(invalidDateFormatCustomerId, segmentCreatePayload)
         }
       }
-
     }
+  }
 
+  override protected def afterAll(): Unit = {
+    system terminate
   }
 
   override lazy val connectionFlow = Flow[HttpRequest].map {
@@ -152,8 +167,8 @@ class SegmentRegistryApiSpec extends AsyncWordSpec with Matchers with ScalaFutur
       HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, validResponse.toJson.compactPrint))
 
     case HttpRequest(HttpMethods.POST, uri, _, entity, _) if validPath(uri)(s"customers/$customerId/segments") =>
-      val segment = Unmarshal(entity).to[SegmentData].futureValue
-      if (segment.id == createSegmentId) {
+      val segment = Unmarshal(entity).to[SegmentCreatePayload].futureValue
+      if (segment.id.isEmpty || segment.id.contains(createSegmentId)) {
         HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, validResponse.toJson.compactPrint))
       } else {
         HttpResponse(StatusCodes.InternalServerError)
