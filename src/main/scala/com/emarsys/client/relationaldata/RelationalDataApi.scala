@@ -31,7 +31,7 @@ trait RelationalDataApi extends RestClient {
   }
 
   def insertIgnore(customerId: Int, tableName: String, payload: Seq[Map[String, JsValue]]) = {
-    val path: String = s"/public_api/customers/$customerId/tables/$tableName/records"
+    val path: String = s"/customers/$customerId/tables/$tableName/records"
 
     val request = RequestBuilding.Post(Uri(baseUrl + path), payload)
 

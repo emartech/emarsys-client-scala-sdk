@@ -49,7 +49,7 @@ class RelationalDataApiSpec extends AsyncWordSpec with Matchers {
 
     "send valid request to proper Uri" in {
       TestRelationalDataApi(escherConfig).insertIgnore(1,"animal", List.empty)
-      calledRequest.get.uri.toString() should endWith("public_api/customers/1/tables/animal/records")
+      calledRequest.get.uri.toString() should endWith("/customers/1/tables/animal/records")
     }
 
     "send the payload with the request" in {
