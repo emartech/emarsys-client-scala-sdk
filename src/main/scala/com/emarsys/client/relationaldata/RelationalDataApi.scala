@@ -23,6 +23,9 @@ trait RelationalDataApi extends RestClient {
   val baseUrl = Uri(scheme = s"${relationalData.protocol}",
                     authority = Authority(host = Host(relationalData.host), port = relationalData.port)) + relationalData.basePath
 
+  final val customerIdHeader = "x-suite-customerid"
+
+
   lazy val connectionFlow: Flow[HttpRequest, HttpResponse, _] = {
     if (relationalData.port == 443) {
       Http().outgoingConnectionHttps(relationalData.host)
@@ -36,9 +39,9 @@ trait RelationalDataApi extends RestClient {
 
     val request = RequestBuilding
       .Post(baseUrl + path, payload)
-      .addHeader(RawHeader("x-suite-customerid", customerId.toString))
+      .addHeader(RawHeader(customerIdHeader, customerId.toString))
 
-    runRaw[String](request)
+    runRawWithHeader[String](request, List(customerIdHeader))
   }
 
 }

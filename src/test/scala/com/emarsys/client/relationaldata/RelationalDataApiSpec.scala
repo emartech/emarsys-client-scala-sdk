@@ -1,7 +1,10 @@
 package com.emarsys.client.relationaldata
 
+import java.util.Optional
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.stream.{ActorMaterializer, Materializer}
 import com.emarsys.escher.akka.http.config.EscherConfig
@@ -35,9 +38,9 @@ class RelationalDataApiSpec extends AsyncWordSpec with Matchers {
         override implicit val executor     = ex
         override val escherConfig          = eConfig
 
-        override def runRaw[S](request: HttpRequest, retry: Int)(implicit um: Unmarshaller[ResponseEntity, S]): Future[S] = {
+        override def runRawWithHeader[S](request: HttpRequest, headers: List[String], retry: Int)(implicit um: Unmarshaller[ResponseEntity, S]): Future[S] = {
           calledRequest = Some(request)
-          super.runRaw(request, retry)
+          super.runRawWithHeader(request, headers, retry)
         }
       }
 
@@ -49,7 +52,8 @@ class RelationalDataApiSpec extends AsyncWordSpec with Matchers {
 
     "send valid request to proper Uri" in {
       TestRelationalDataApi(escherConfig).insertIgnore(1,"animal", List.empty)
-      calledRequest.get.uri.toString() should endWith("/customers/1/tables/animal/records")
+      calledRequest.get.uri.toString() should endWith("/tables/animal/records")
+      calledRequest.get.getHeader("x-suite-customerid") should equal(Optional.of(RawHeader("x-suite-customerid", "1")))
     }
 
     "send the payload with the request" in {
