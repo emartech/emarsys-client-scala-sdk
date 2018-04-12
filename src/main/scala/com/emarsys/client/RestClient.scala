@@ -52,5 +52,17 @@ trait RestClient extends EscherDirectives {
     } yield result
   }
 
+  implicit class RichUri(uri: Uri) {
+    def +(pathSuffix: String): Uri = {
+      val pathSuffixWithSlash = if(pathSuffix.startsWith("/")) {
+        pathSuffix
+      } else {
+        "/" + pathSuffix
+      }
 
+      val path = uri.path
+
+      uri.withPath(path + pathSuffixWithSlash)
+    }
+  }
 }

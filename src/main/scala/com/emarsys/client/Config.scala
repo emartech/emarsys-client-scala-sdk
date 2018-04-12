@@ -43,6 +43,7 @@ trait Config {
                                     protocol : String,
                                     host: String,
                                     port: Int,
+                                    basePath: String,
                                     serviceName: String = "relational-data"
                                   )
 

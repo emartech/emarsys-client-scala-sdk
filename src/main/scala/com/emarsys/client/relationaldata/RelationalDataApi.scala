@@ -11,16 +11,17 @@ import com.emarsys.escher.akka.http.config.EscherConfig
 import com.emarsys.client.Config.emsApi.relationalData
 import spray.json.DefaultJsonProtocol._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.Uri.{Authority, Host}
+import akka.http.scaladsl.model.headers.RawHeader
 import spray.json.JsValue
 
 import scala.concurrent.ExecutionContextExecutor
 
-
 trait RelationalDataApi extends RestClient {
 
-
   val serviceName = relationalData.serviceName
-  val baseUrl = s"${relationalData.protocol}://${relationalData.host}:${relationalData.port}"
+  val baseUrl = Uri(scheme = s"${relationalData.protocol}",
+                    authority = Authority(host = Host(relationalData.host), port = relationalData.port)) + relationalData.basePath
 
   lazy val connectionFlow: Flow[HttpRequest, HttpResponse, _] = {
     if (relationalData.port == 443) {
@@ -33,21 +34,21 @@ trait RelationalDataApi extends RestClient {
   def insertIgnore(customerId: Int, tableName: String, payload: Seq[Map[String, JsValue]]) = {
     val path: String = s"/customers/$customerId/tables/$tableName/records"
 
-    val request = RequestBuilding.Post(Uri(baseUrl + path), payload)
+    val request = RequestBuilding
+      .Post(baseUrl + path, payload)
+      .addHeader(RawHeader("x-suite-customerid", customerId.toString))
 
     runRaw[String](request)
   }
-
 
 }
 
 object RelationalDataApi {
 
-  def apply(eConfig: EscherConfig)(
-    implicit
-    sys: ActorSystem,
-    mat: Materializer,
-    ex: ExecutionContextExecutor): RelationalDataApi = {
+  def apply(eConfig: EscherConfig)(implicit
+                                   sys: ActorSystem,
+                                   mat: Materializer,
+                                   ex: ExecutionContextExecutor): RelationalDataApi = {
 
     new RelationalDataApi {
       override implicit val system       = sys

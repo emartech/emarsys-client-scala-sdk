@@ -34,6 +34,8 @@ libraryDependencies ++= {
   )
 }
 
+scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
+
 publishTo := Some(Resolver.file("releases", new File("releases")))
 scalaVersion in ThisBuild := scalaV
 fork in Test := true
