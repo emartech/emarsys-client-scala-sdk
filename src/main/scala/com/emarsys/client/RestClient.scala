@@ -47,9 +47,10 @@ trait RestClient extends EscherDirectives {
       response <- sendRequest(signed)
       result <- response.status match {
         case Success(_) => Unmarshal(response.entity).to[S].map(Right(_))
-        case ServerError(_) if retry > 0 =>
+        case ServerError(_) if retry > 0 => Unmarshal(response.entity).to[String].flatMap { _ =>
           system.log.info("Retrying request: {} / {} attempt(s) left", request.uri, retry - 1)
           runRawE[S](request, headers, retry - 1)
+        }
         case status => Unmarshal(response.entity).to[String].map { responseBody =>
           system.log.error("Request to {} failed with status: {} / body: {}", request.uri, status, responseBody)
           Left((status.intValue, responseBody))

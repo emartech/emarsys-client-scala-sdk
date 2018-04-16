@@ -2,7 +2,7 @@ val scalaV = "2.12.4"
 
 name         := "emarsys-client-scala-sdk"
 organization := "com.emarsys"
-version      := "0.2.4"
+version      := "0.2.5"
 scalaVersion := scalaV
 
 scalacOptions ++= Seq(
