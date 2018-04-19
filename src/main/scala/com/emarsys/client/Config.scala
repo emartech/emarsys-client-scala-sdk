@@ -3,10 +3,7 @@ package com.emarsys.client
 
 trait Config {
 
-  import pureconfig.ProductHint
-  import pureconfig.ConfigFieldMapping
-  import pureconfig.CamelCase
-  import pureconfig.loadConfigOrThrow
+  import pureconfig.{CamelCase, ConfigFieldMapping, ProductHint, loadConfigOrThrow}
 
   implicit def hint[T]: ProductHint[T] = ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
 
@@ -15,7 +12,8 @@ trait Config {
                      segmentRegistry: SegmentRegistryConfig,
                      predict: PredictConfig,
                      clientRetryCount: Int,
-                     relationalData: RelationalDataConfig
+                     relationalData: RelationalDataConfig,
+                     restClient: RestClientConfig
                    )
 
   case class SuiteConfig(
@@ -46,6 +44,10 @@ trait Config {
                                     basePath: String,
                                     serviceName: String = "relational-data"
                                   )
+
+  case class RestClientConfig(
+                             errorOnFail: Boolean = true
+                             )
 
   val emsApi : EmsApiConfig =  loadConfigOrThrow[EmsApiConfig]("ems-api")
 

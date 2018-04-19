@@ -1,6 +1,7 @@
 package com.emarsys.client
 
 import akka.actor.ActorSystem
+import akka.event.Logging
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.RawHeader
@@ -16,6 +17,7 @@ trait RestClient extends EscherDirectives {
   implicit val materializer: Materializer
   implicit val executor: ExecutionContextExecutor
 
+  val failLevel = if(Config.emsApi.restClient.errorOnFail) Logging.ErrorLevel else Logging.WarningLevel
   val connectionFlow: Flow[HttpRequest, HttpResponse, _]
   val serviceName: String
   lazy val maxRetryCount: Int = 0
@@ -52,7 +54,7 @@ trait RestClient extends EscherDirectives {
           runRawE[S](request, headers, retry - 1)
         }
         case status => Unmarshal(response.entity).to[String].map { responseBody =>
-          system.log.error("Request to {} failed with status: {} / body: {}", request.uri, status, responseBody)
+          system.log.log(failLevel,"Request to {} failed with status: {} / body: {}", request.uri, status, responseBody)
           Left((status.intValue, responseBody))
         }
       }
