@@ -31,7 +31,7 @@ libraryDependencies ++= {
     "com.emarsys"           %% "escher-akka-http"     % "0.2.0",
     "joda-time"             %  "joda-time"            % "2.9.1",
     "org.joda"              %  "joda-convert"         % "2.0.1",
-    "com.github.pureconfig" %% "pureconfig"           % "0.7.2"
+    "com.github.pureconfig" %% "pureconfig"           % "0.9.1"
   )
 }
 
