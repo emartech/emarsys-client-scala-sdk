@@ -18,7 +18,6 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import com.emarsys.client.RestClientException
 import com.emarsys.formats.JodaDateTimeFormat._
 
-
 class SegmentRegistryApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with SegmentRegistryApi with BeforeAndAfterAll {
 
   implicit val system          = ActorSystem("segment-registry-api-test-system")
@@ -141,6 +140,20 @@ class SegmentRegistryApiSpec extends AsyncWordSpec with Matchers with ScalaFutur
         }
       }
     }
+
+    "return successful future" when {
+      "delete responded with no content" in {
+        delete(customerId, createSegmentId).map(_ => 1).map(_ shouldBe 1)
+      }
+    }
+
+    "return failed future" when {
+      "deleted responded with failure" in {
+        recoverToSucceededIf[RestClientException] {
+          delete(customerId, createSegmentId + 1)
+        }
+      }
+    }
   }
 
   override protected def afterAll(): Unit = {
@@ -165,6 +178,12 @@ class SegmentRegistryApiSpec extends AsyncWordSpec with Matchers with ScalaFutur
 
     case HttpRequest(HttpMethods.PUT, uri, _, _, _) if validPath(uri)(s"customers/$invalidResponseCodeCustomerId/segments") =>
       HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, validResponse.toJson.compactPrint))
+
+    case HttpRequest(HttpMethods.DELETE, uri, _, _, _) if validPath(uri)(s"customers/$customerId/segments/$createSegmentId") =>
+      HttpResponse(StatusCodes.NoContent)
+
+    case HttpRequest(HttpMethods.DELETE, _, _, _, _) =>
+      HttpResponse(StatusCodes.InternalServerError)
 
     case HttpRequest(HttpMethods.POST, uri, _, entity, _) if validPath(uri)(s"customers/$customerId/segments") =>
       val segment = Unmarshal(entity).to[SegmentCreatePayload].futureValue

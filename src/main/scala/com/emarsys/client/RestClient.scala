@@ -33,10 +33,9 @@ trait RestClient extends EscherDirectives {
   def runRawWithHeader[S](request: HttpRequest, headers: List[String], retry: Int = maxRetryCount)(implicit um: Unmarshaller[ResponseEntity, S]): Future[S] = {
     for {
       result <- runRawE[S](request, headers, retry).map {
-        case Left((status, responseBody)) => {
+        case Left((status, responseBody)) =>
           system.log.error("Request to {} failed with status: {} / body: {}", request.uri, status, responseBody)
           throw RestClientException(s"Rest client request failed for ${request.uri}", status, responseBody)
-        }
         case Right(response) => response
       }
     } yield result
