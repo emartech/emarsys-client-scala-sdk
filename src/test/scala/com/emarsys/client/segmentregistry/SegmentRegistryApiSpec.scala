@@ -80,18 +80,7 @@ class SegmentRegistryApiSpec extends AsyncWordSpec with Matchers with ScalaFutur
 
       "only mandatory segment data is sent" in {
         update(customerId, SegmentData(mandatoryOnlySegmentId, "segment name", "normal")).map {
-          _ shouldEqual SegmentRegistryRecord(
-            id = mandatoryOnlySegmentId,
-            originalId = mandatoryOnlySegmentId,
-            customerId = customerId,
-            segmentType = "normal",
-            name = "segment name",
-            created = segmentCreated,
-            updated = segmentCreated,
-            criteriaTypes = List(),
-            baseContactListId = 1,
-            predefined = false
-          )
+          _ shouldEqual validResponseWithMandatoryData
         }
       }
     }
@@ -107,6 +96,39 @@ class SegmentRegistryApiSpec extends AsyncWordSpec with Matchers with ScalaFutur
       "date format is invalid in response" in {
         recoverToSucceededIf[IllegalArgumentException] {
           update(invalidDateFormatCustomerId, segmentData)
+        }
+      }
+    }
+
+
+    "update by registry id responds with segment record" when {
+
+      "proper segment data is sent" in {
+        updateByRegistryId(customerId, segmentData).map {
+          _ shouldEqual validResponse
+        }
+      }
+
+      "only mandatory segment data is sent" in {
+        updateByRegistryId(customerId, SegmentData(mandatoryOnlySegmentId, "segment name", "normal")).map {
+          _ shouldEqual validResponseWithMandatoryData
+        }
+      }
+    }
+
+
+
+    "update by registry id returns failed future" when {
+
+      "response code is invalid" in {
+        recoverToSucceededIf[RestClientException] {
+          updateByRegistryId(invalidResponseCodeCustomerId, segmentData)
+        }
+      }
+
+      "date format is invalid in response" in {
+        recoverToSucceededIf[IllegalArgumentException] {
+          updateByRegistryId(invalidDateFormatCustomerId, segmentData)
         }
       }
     }
@@ -156,11 +178,38 @@ class SegmentRegistryApiSpec extends AsyncWordSpec with Matchers with ScalaFutur
     }
   }
 
+  private val validResponseWithMandatoryData = {
+    SegmentRegistryRecord(
+      id = mandatoryOnlySegmentId,
+      originalId = mandatoryOnlySegmentId,
+      customerId = customerId,
+      segmentType = "normal",
+      name = "segment name",
+      created = segmentCreated,
+      updated = segmentCreated,
+      criteriaTypes = List(),
+      baseContactListId = 1,
+      predefined = false
+    )
+  }
+
   override protected def afterAll(): Unit = {
     system terminate
   }
 
   override lazy val connectionFlow = Flow[HttpRequest].map {
+
+    case HttpRequest(HttpMethods.PUT, uri, _, entity, _) if validPath(uri)(s"customers/$customerId/segments/${segmentData.id}") =>
+      val segment = Unmarshal(entity).to[SegmentData].futureValue
+      val response = SegmentRegistryRecord(segment.id, segment.id, customerId, segment.segmentType, segment.name,
+          segmentCreated, segmentCreated, segment.criteriaTypes.get, segment.baseContactListId.get, predefined = true)
+      HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, response.toJson.compactPrint))
+
+    case HttpRequest(HttpMethods.PUT, uri, _, entity, _) if validPath(uri)(s"customers/$customerId/segments/$mandatoryOnlySegmentId") =>
+      val segment = Unmarshal(entity).to[SegmentData].futureValue
+      val response = SegmentRegistryRecord(segment.id, segment.id, customerId, segment.segmentType, segment.name,
+        segmentCreated, segmentCreated, List(), 1, predefined = false)
+      HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, response.toJson.compactPrint))
 
     case HttpRequest(HttpMethods.PUT, uri, _, entity, _) if validPath(uri)(s"customers/$customerId/segments") =>
       val segment = Unmarshal(entity).to[SegmentData].futureValue
@@ -177,6 +226,12 @@ class SegmentRegistryApiSpec extends AsyncWordSpec with Matchers with ScalaFutur
       respondWithInvalidDate
 
     case HttpRequest(HttpMethods.PUT, uri, _, _, _) if validPath(uri)(s"customers/$invalidResponseCodeCustomerId/segments") =>
+      HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, validResponse.toJson.compactPrint))
+
+    case HttpRequest(HttpMethods.PUT, uri, _, _, _) if validPath(uri)(s"customers/$invalidDateFormatCustomerId/segments/${segmentData.id}") =>
+      respondWithInvalidDate
+
+    case HttpRequest(HttpMethods.PUT, uri, _, _, _) if validPath(uri)(s"customers/$invalidResponseCodeCustomerId/segments/${segmentData.id}") =>
       HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, validResponse.toJson.compactPrint))
 
     case HttpRequest(HttpMethods.DELETE, uri, _, _, _) if validPath(uri)(s"customers/$customerId/segments/$createSegmentId") =>

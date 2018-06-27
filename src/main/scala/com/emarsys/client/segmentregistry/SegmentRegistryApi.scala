@@ -35,6 +35,12 @@ trait SegmentRegistryApi extends RestClient {
     )
   }
 
+  def updateByRegistryId(customerId: Int, segmentData: SegmentData): Future[SegmentRegistryRecord] = {
+    runRaw[SegmentRegistryRecord](
+      RequestBuilding.Put(Uri(baseUrl + path(customerId) + "/" + segmentData.id), segmentData)
+    )
+  }
+
   def delete(customerId: Int, segmentId: Int): Future[Unit] = {
     runRaw[String](RequestBuilding.Delete(Uri(baseUrl + path(customerId) + "/" + segmentId))).map(_ => ())
   }
