@@ -2,7 +2,7 @@ val scalaV = "2.12.6"
 
 name         := "emarsys-client-scala-sdk"
 organization := "com.emarsys"
-version      := "0.3.3"
+version      := "0.3.4"
 scalaVersion := scalaV
 
 scalacOptions ++= Seq(
@@ -26,14 +26,16 @@ libraryDependencies ++= {
     "com.typesafe.akka"     %% "akka-http-core"       % akkaHttpV,
     "com.typesafe.akka"     %% "akka-http"            % akkaHttpV,
     "com.typesafe.akka"     %% "akka-http-spray-json" % akkaHttpV,
-    "com.github.fommil"     %% "spray-json-shapeless" % "1.3.0",
+    "com.github.fommil"     %% "spray-json-shapeless" % "1.4.0",
     "org.scalatest"         %% "scalatest"            % scalaTestV % "test",
-    "com.emarsys"           %% "escher-akka-http"     % "0.2.3",
+    "com.emarsys"           %% "escher-akka-http"     % "1.0.0",
     "joda-time"             %  "joda-time"            % "2.9.1",
     "org.joda"              %  "joda-convert"         % "2.0.1",
     "com.github.pureconfig" %% "pureconfig"           % "0.9.1"
   )
 }
+
+addCompilerPlugin("io.tryp" % "splain" % "0.3.1" cross CrossVersion.patch)
 
 scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
 
