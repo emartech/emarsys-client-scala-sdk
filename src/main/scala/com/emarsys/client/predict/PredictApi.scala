@@ -88,9 +88,6 @@ object PredictApi {
   final case class PredictIdentityHash(predictUserId: String, predictSecret: String) extends PredictIdentity
   final case class PredictIdentityAuth(predictAuth: String)                          extends PredictIdentity
 
-  final case class LastSession(productCategory: String, date: String, productName: String, timeSpent: Int)
-  final case class PredictData(recommendations: List[Recommendation], lastSession: Option[LastSession])
-  object PredictData { def empty = PredictData(List(), None) }
   final case class Recommendation(item: String, title: String, link: String, image: String, category: String, msrp: Option[Float], price: Float)
 
   def apply(eConfig: EscherConfig)(
