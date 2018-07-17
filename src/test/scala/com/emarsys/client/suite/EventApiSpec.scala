@@ -6,7 +6,7 @@ import akka.http.scaladsl.model._
 import akka.stream.scaladsl.{Flow, Sink}
 import akka.stream.{ActorMaterializer, Materializer}
 import com.emarsys.client.RestClientException
-import com.emarsys.client.suite.EventApi.{ExternalEventTrigger, ExternalEventTriggerBatch, ExternalEventTriggerContact}
+import com.emarsys.client.suite.EventApi.{ExternalEventTrigger, ExternalEventTriggerBatch, ExternalEventTriggerContact, TriggerError}
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory
 import org.scalatest.concurrent.ScalaFutures
@@ -105,8 +105,9 @@ class EventApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
 
     "batch trigger called" should {
 
+      val data = JsObject("hello" -> JsBoolean(true))
+
       "return successful response" in {
-        val data = JsObject("hello" -> JsBoolean(true))
         val otherData = JsObject("data" -> JsString("asd"))
         val otherExternalId = "OTHER_EXTERNAL_ID"
         val requestData = s"""{"key_id":"$keyId","contacts":[{"external_id":"$externalId","data":{"hello":true}},{"external_id":"$otherExternalId","data":{"data":"asd"}}]}"""
@@ -121,8 +122,35 @@ class EventApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
         result.isSuccess shouldEqual true
       }
 
-      "return error" in {
-        val data = JsObject("hello" -> JsBoolean(true))
+      "return errors of successful response if one of the items fails" in {
+        val requestData = s"""{"key_id":"$keyId","contacts":[{"external_id":"$externalId","data":{"hello":true}}]}"""
+        val triggerData = ExternalEventTriggerBatch(keyId, List(
+          ExternalEventTriggerContact(externalId, Some(data))
+        ))
+
+        val validResponseContainingOneError =
+          s"""{
+            |  "replyCode": 0,
+            |  "replyText": "OK",
+            |  "data": {
+            |    "errors": {
+            |      "$externalId": {
+            |        "2008": "No contact found with the external id: $keyId - $externalId"
+            |      }
+            |    }
+            |  }
+            |}""".stripMargin
+
+        val eventClient = eventApi(path, requestData, OK, validResponseContainingOneError)
+        val result = Await.result(eventClient.triggerBatch(customerId, eventId, triggerData), 1.second)
+
+        result shouldEqual List(
+          TriggerError(externalId, "2008", s"No contact found with the external id: $keyId - $externalId")
+        )
+      }
+
+      "return error if the request fails" in {
+
         val requestData = s"""{"key_id":"$keyId","contacts":[{"external_id":"$externalId","data":{"hello":true}}]}"""
         val triggerData = ExternalEventTriggerBatch(keyId, List(
           ExternalEventTriggerContact(externalId, Some(data))

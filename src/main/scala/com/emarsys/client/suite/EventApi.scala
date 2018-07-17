@@ -22,15 +22,24 @@ trait EventApi extends SuiteClient {
     run[Map[String, String]](request).map(_ => ())
   }
 
-  def triggerBatch(customerId: Int, eventId: String, entity: ExternalEventTriggerBatch): Future[Unit] = {
+  def triggerBatch(customerId: Int, eventId: String, entity: ExternalEventTriggerBatch): Future[List[TriggerError]] = {
     val path = s"event/$eventId/trigger"
     val request = RequestBuilding.Post(Uri(baseUrl(customerId) + path), entity.toJsonWithPureSpray)
 
-    run[Map[String, String]](request).map(_ => ())
+    run[BatchTriggerResponseData](request).map(_.data.errors.fold(List.empty[TriggerError])( errorData =>
+      errorData.map {
+        case (externalId, errors) => errors.headOption.map {
+          case (errorCode, errorMessage) => TriggerError(externalId, errorCode, errorMessage)
+        }
+      }.toList.flatten
+    ))
   }
 }
 
 object EventApi {
+
+  case class BatchTriggerResponseData(errors: Option[Map[String, Map[String, String]]])
+  case class TriggerError(externalId: String, errorCode: String, errorMessage: String)
 
   case class ExternalEventTrigger(keyId: String, externalId: String, data: Option[JsValue]) {
     private[EventApi] def toJsonWithPureSpray: JsValue = {
