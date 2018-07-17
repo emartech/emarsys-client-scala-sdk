@@ -6,12 +6,12 @@ import akka.http.scaladsl.model._
 import akka.stream.scaladsl.{Flow, Sink}
 import akka.stream.{ActorMaterializer, Materializer}
 import com.emarsys.client.RestClientException
-import com.emarsys.client.suite.EventApi.ExternalEventTrigger
+import com.emarsys.client.suite.EventApi.{ExternalEventTrigger, ExternalEventTriggerBatch, ExternalEventTriggerContact}
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{AsyncWordSpec, Matchers}
-import spray.json.{JsBoolean, JsObject}
+import spray.json.{JsBoolean, JsObject, JsString}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor}
@@ -42,6 +42,7 @@ class EventApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
 
         override lazy val connectionFlow = Flow[HttpRequest].map {
           case HttpRequest(HttpMethods.POST, uri, _, entity, _) if uri.path.toString().endsWith(path) && plainTextParse(entity) == data => response
+          case HttpRequest(HttpMethods.POST, _, _, entity, _) => HttpResponse(BadRequest, entity = plainTextParse(entity))
         }
       }
 
@@ -100,6 +101,40 @@ class EventApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
         }
       }
     }
+
+
+    "batch trigger called" should {
+
+      "return successful response" in {
+        val data = JsObject("hello" -> JsBoolean(true))
+        val otherData = JsObject("data" -> JsString("asd"))
+        val otherExternalId = "OTHER_EXTERNAL_ID"
+        val requestData = s"""{"key_id":"$keyId","contacts":[{"external_id":"$externalId","data":{"hello":true}},{"external_id":"$otherExternalId","data":{"data":"asd"}}]}"""
+
+        val eventClient = eventApi(path, requestData, OK, validResponse)
+        val triggerData = ExternalEventTriggerBatch(keyId, List(
+          ExternalEventTriggerContact(externalId, Some(data)),
+          ExternalEventTriggerContact(otherExternalId, Some(otherData))
+        ))
+        val result = Try(Await.result(eventClient.triggerBatch(customerId, eventId, triggerData), 1.second))
+
+        result.isSuccess shouldEqual true
+      }
+
+      "return error" in {
+        val data = JsObject("hello" -> JsBoolean(true))
+        val requestData = s"""{"key_id":"$keyId","contacts":[{"external_id":"$externalId","data":{"hello":true}}]}"""
+        val triggerData = ExternalEventTriggerBatch(keyId, List(
+          ExternalEventTriggerContact(externalId, Some(data))
+        ))
+
+        recoverToSucceededIf[RestClientException] {
+          eventApi(path, requestData, BadRequest, errorResponse).triggerBatch(customerId, eventId, triggerData)
+        }
+      }
+
+    }
+
   }
 
   def eventApi(requestPath: String, requestData: String, httpStatus: StatusCode, response: String) = {
