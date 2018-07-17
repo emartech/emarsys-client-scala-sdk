@@ -5,15 +5,19 @@ import akka.http.scaladsl.client.RequestBuilding
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model._
 import akka.stream.Materializer
+import com.emarsys.client.suite.SuiteClient.SuiteRawResponse
 import com.emarsys.escher.akka.http.config.EscherConfig
-import spray.json.JsValue
+import spray.json.DefaultJsonProtocol._
+import spray.json._
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.util.Try
 
 trait EventApi extends SuiteClient {
 
-  import fommil.sjs.FamilyFormats._
   import EventApi._
+  implicit val formatForMap = jsonFormat3(SuiteRawResponse[Map[String, String]])
+  implicit val formatForJsValue = jsonFormat3(SuiteRawResponse[JsValue])
 
   def trigger(customerId: Int, eventId: String, entity: ExternalEventTrigger): Future[Unit] = {
     val path = s"event/$eventId/trigger"
@@ -26,19 +30,35 @@ trait EventApi extends SuiteClient {
     val path = s"event/$eventId/trigger"
     val request = RequestBuilding.Post(Uri(baseUrl(customerId) + path), entity.toJsonWithPureSpray)
 
-    run[BatchTriggerResponseData](request).map(_.data.errors.fold(List.empty[TriggerError])( errorData =>
-      errorData.map {
-        case (externalId, errors) => errors.headOption.map {
-          case (errorCode, errorMessage) => TriggerError(externalId, errorCode, errorMessage)
-        }
-      }.toList.flatten
-    ))
+    run[JsValue](request).map(_.data match {
+      case data: JsObject => parseBatchTriggerResponseData(data)
+      case _ => List.empty[TriggerError]
+    })
   }
+
+  private def parseBatchTriggerResponseData(data: JsObject) = {
+    implicit val emptyBatchTriggerResponseDataFormat = jsonFormat1(BatchTriggerResponseDataEmptyErrors)
+    implicit val batchTriggerResponseDataFormat = jsonFormat1(BatchTriggerResponseData)
+    Try(data.toJson.convertTo[BatchTriggerResponseDataEmptyErrors]).toOption.fold(
+      data.toJson.convertTo[BatchTriggerResponseData].errors.fold(List.empty[TriggerError])(convertToTriggerErrors)
+    )(_ => List.empty[TriggerError])
+  }
+
+  private def convertToTriggerErrors(errorData: Map[String, Map[String, String]]) = {
+    errorData.map {
+      case (externalId, errors) => errors.headOption.map {
+        case (errorCode, errorMessage) => TriggerError(externalId, errorCode, errorMessage)
+      }
+    }.toList.flatten
+  }
+
 }
 
 object EventApi {
 
+  case class BatchTriggerResponseDataEmptyErrors(errors: List[String])
   case class BatchTriggerResponseData(errors: Option[Map[String, Map[String, String]]])
+  implicit val batchTriggerResponseDataFormat = jsonFormat1(BatchTriggerResponseData)
   case class TriggerError(externalId: String, errorCode: String, errorMessage: String)
 
   case class ExternalEventTrigger(keyId: String, externalId: String, data: Option[JsValue]) {

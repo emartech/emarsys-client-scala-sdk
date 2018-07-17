@@ -107,16 +107,35 @@ class EventApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
 
       val data = JsObject("hello" -> JsBoolean(true))
 
-      "return successful response" in {
+      "return successful response when data errors is an array" in {
         val otherData = JsObject("data" -> JsString("asd"))
         val otherExternalId = "OTHER_EXTERNAL_ID"
         val requestData = s"""{"key_id":"$keyId","contacts":[{"external_id":"$externalId","data":{"hello":true}},{"external_id":"$otherExternalId","data":{"data":"asd"}}]}"""
 
-        val eventClient = eventApi(path, requestData, OK, validResponse)
+        val validBatchResponse =
+          """{
+            |  "data": {"errors":[]},
+            |  "replyCode": 0,
+            |  "replyText": "OK"
+            |}""".stripMargin
+
+        val eventClient = eventApi(path, requestData, OK, validBatchResponse)
         val triggerData = ExternalEventTriggerBatch(keyId, List(
           ExternalEventTriggerContact(externalId, Some(data)),
           ExternalEventTriggerContact(otherExternalId, Some(otherData))
         ))
+        val result = Try(Await.result(eventClient.triggerBatch(customerId, eventId, triggerData), 1.second))
+
+        result.isSuccess shouldEqual true
+      }
+
+      "return successful response when data is empty object" in {
+        val requestData = s"""{"key_id":"$keyId","contacts":[{"external_id":"$externalId","data":{"hello":true}}]}"""
+        val triggerData = ExternalEventTriggerBatch(keyId, List(
+          ExternalEventTriggerContact(externalId, Some(data))
+        ))
+
+        val eventClient = eventApi(path, requestData, OK, validResponse)
         val result = Try(Await.result(eventClient.triggerBatch(customerId, eventId, triggerData), 1.second))
 
         result.isSuccess shouldEqual true
