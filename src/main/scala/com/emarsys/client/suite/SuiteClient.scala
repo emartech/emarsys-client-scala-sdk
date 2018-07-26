@@ -21,7 +21,7 @@ trait SuiteClient extends RestClient {
   protected def createCustomerHeader(customerId: Int) = RawHeader("X-SUITE-CUSTOMERID", customerId.toString)
 
   def baseUrl(customerId: Int) =
-    s"${suite.protocol}://${suite.host}:${suite.port}${suite.apiPath}/$customerId/"
+    s"${suite.protocol}://${suite.host}${suite.apiPath}/$customerId/"
 
   def run[S](request: HttpRequest)(implicit um: Unmarshaller[ResponseEntity, SuiteRawResponse[S]]): Future[SuiteRawResponse[S]] =
     runRaw[SuiteRawResponse[S]](request)
