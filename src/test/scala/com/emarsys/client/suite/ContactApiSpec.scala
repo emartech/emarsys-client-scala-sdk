@@ -11,8 +11,10 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{AsyncWordSpec, Matchers}
 import DataTransformers._
 import com.emarsys.client.RestClientException
+import com.emarsys.client.RestClient
 
 import scala.concurrent.ExecutionContextExecutor
+
 
 class ContactApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
 
@@ -119,6 +121,12 @@ class ContactApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
       "return failure in case of invalid but successful response" in {
         recoverToSucceededIf[Exception] {
           contactApi(OK, invalidResponse).getData(customerId, GetDataRequest("id", Nil, None))
+        }
+      }
+
+      "failed unmarshall" in {
+        recoverToSucceededIf[RestClient.InvalidResponseFormatException] {
+          contactApi(OK, "[]").getData(customerId, GetDataRequest("id", Nil, None))
         }
       }
 

@@ -11,8 +11,11 @@ import akka.stream.scaladsl.{Flow, Sink, Source}
 import com.emarsys.escher.akka.http.EscherDirectives
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
+import spray.json.DeserializationException
 
 trait RestClient extends EscherDirectives {
+  import RestClient._
+
   implicit val system: ActorSystem
   implicit val materializer: Materializer
   implicit val executor: ExecutionContextExecutor
@@ -48,6 +51,12 @@ trait RestClient extends EscherDirectives {
       response <- sendRequest(signed)
       result <- response.status match {
         case Success(_) => Unmarshal(response.entity).to[S].map(Right(_))
+          .recoverWith {
+            case err: DeserializationException =>
+              Unmarshal(response.entity).to[String].flatMap { body =>
+                Future.failed(InvalidResponseFormatException(err.getMessage, body, err))
+              }
+          }
         case ServerError(_) if retry > 0 => Unmarshal(response.entity).to[String].flatMap { _ =>
           system.log.info("Retrying request: {} / {} attempt(s) left", request.uri, retry - 1)
           runRawE[S](request, headers, retry - 1)
@@ -73,4 +82,8 @@ trait RestClient extends EscherDirectives {
       uri.withPath(path + pathSuffixWithSlash)
     }
   }
+}
+
+object RestClient {
+  case class InvalidResponseFormatException(message: String, responseBody: String, cause: Throwable) extends Exception(message)
 }
