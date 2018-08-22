@@ -3,6 +3,7 @@ package com.emarsys.client.suite
 import akka.actor.ActorSystem
 import akka.http.scaladsl.client.RequestBuilding
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.Uri.Query
 import akka.http.scaladsl.model._
 import akka.stream.Materializer
 import com.emarsys.escher.akka.http.config.EscherConfig
@@ -14,9 +15,11 @@ trait SegmentRunApi extends SuiteClient {
 
   import SegmentRunApi._
 
-  def start(customerId: Int, segmentId: Int): Future[SegmentRunResult] = {
+  def start(customerId: Int, segmentId: Int, renewCache: Boolean = false): Future[SegmentRunResult] = {
     val path    = s"filter/$segmentId/runs"
-    val request = RequestBuilding.Post(Uri(baseUrl(customerId) + path))
+    val baseUri = Uri(baseUrl(customerId) + path)
+    val uri     = if (renewCache) baseUri.withQuery(Query("renew" -> "true")) else baseUri
+    val request = RequestBuilding.Post(uri)
 
     run[SegmentRunResultRaw](request).map(_.data).map(toInternalFormat)
   }

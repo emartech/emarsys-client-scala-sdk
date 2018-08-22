@@ -1,6 +1,7 @@
 package com.emarsys.client.suite
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.model.StatusCodes.{OK, InternalServerError}
 import akka.http.scaladsl.model._
 import akka.stream.scaladsl.Flow
 import akka.stream.{ActorMaterializer, Materializer}
@@ -19,24 +20,7 @@ class SegmentRunApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
   implicit val materializer = ActorMaterializer()
   implicit val executor     = system.dispatcher
 
-  val escherConfig = new EscherConfig(ConfigFactory.load().getConfig("ems-api.escher"))
-
-  object TestSegmentRunApi {
-
-    def apply(eConfig: EscherConfig, response: HttpResponse)(implicit
-                                                             sys: ActorSystem,
-                                                             mat: Materializer,
-                                                             ex: ExecutionContextExecutor) =
-      new SuiteClient with SegmentRunApi {
-        override implicit val system       = sys
-        override implicit val materializer = mat
-        override implicit val executor     = ex
-        override val escherConfig          = eConfig
-
-        override lazy val connectionFlow = Flow[HttpRequest].map(_ => response)
-      }
-  }
-
+  val escherConfig       = new EscherConfig(ConfigFactory.load().getConfig("ems-api.escher"))
   val customerId         = 215526938
   val segmentId          = 1000500238
   val runId              = "100024015"
@@ -64,6 +48,22 @@ class SegmentRunApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
     "return with run id and waiting status" when {
       "valid payload provided" in {
         segmentApi(StatusCodes.OK, validStartResponse)
+          .start(customerId, segmentId)
+          .map(_ shouldEqual SegmentRunResult(runId, "waiting", None))
+      }
+    }
+
+    "call api with renew parameter" when {
+      "renew param is true" in {
+        segmentApiForceRenew(StatusCodes.OK, validStartResponse)
+          .start(customerId, segmentId, true)
+          .map(_ shouldEqual SegmentRunResult(runId, "waiting", None))
+      }
+    }
+
+    "no renew parameter in request" when {
+      "renew param is false" in {
+        segmentApiForceNoRenew(StatusCodes.OK, validStartResponse)
           .start(customerId, segmentId)
           .map(_ shouldEqual SegmentRunResult(runId, "waiting", None))
       }
@@ -109,4 +109,72 @@ class SegmentRunApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
   def segmentApi(httpStatus: StatusCode, response: String) =
     TestSegmentRunApi(escherConfig,
                       HttpResponse(httpStatus, Nil, HttpEntity(ContentTypes.`application/json`, response)))
+
+  def segmentApiForceRenew(httpStatus: StatusCode, response: String) =
+    TestSegmentRunApiForceRenew(escherConfig, response)
+
+  def segmentApiForceNoRenew(httpStatus: StatusCode, response: String) =
+    TestSegmentRunApiNoRenew(escherConfig, response)
+}
+
+object TestSegmentRunApi {
+
+  def apply(eConfig: EscherConfig, response: HttpResponse)(implicit
+                                                           sys: ActorSystem,
+                                                           mat: Materializer,
+                                                           ex: ExecutionContextExecutor) =
+    new SuiteClient with SegmentRunApi {
+      override implicit val system       = sys
+      override implicit val materializer = mat
+      override implicit val executor     = ex
+      override val escherConfig          = eConfig
+
+      override lazy val connectionFlow = Flow[HttpRequest].map(_ => response)
+    }
+}
+
+object TestSegmentRunApiForceRenew {
+
+  def apply(eConfig: EscherConfig, response: String)(implicit
+                                                     sys: ActorSystem,
+                                                     mat: Materializer,
+                                                     ex: ExecutionContextExecutor) =
+    new SuiteClient with SegmentRunApi {
+      override implicit val system       = sys
+      override implicit val materializer = mat
+      override implicit val executor     = ex
+      override val escherConfig          = eConfig
+
+      override lazy val connectionFlow = Flow[HttpRequest].map {
+        case HttpRequest(HttpMethods.POST, uri, _, _, _) if uri.rawQueryString.get == "renew=true" =>
+          HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, response))
+        case _ =>
+          HttpResponse(InternalServerError,
+                       Nil,
+                       HttpEntity(ContentTypes.`application/json`, "Query must contain renew=true"))
+      }
+    }
+}
+
+object TestSegmentRunApiNoRenew {
+
+  def apply(eConfig: EscherConfig, response: String)(implicit
+                                                     sys: ActorSystem,
+                                                     mat: Materializer,
+                                                     ex: ExecutionContextExecutor) =
+    new SuiteClient with SegmentRunApi {
+      override implicit val system       = sys
+      override implicit val materializer = mat
+      override implicit val executor     = ex
+      override val escherConfig          = eConfig
+
+      override lazy val connectionFlow = Flow[HttpRequest].map {
+        case HttpRequest(HttpMethods.POST, uri, _, _, _) if uri.rawQueryString.isEmpty =>
+          HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, response))
+        case _ =>
+          HttpResponse(InternalServerError,
+                       Nil,
+                       HttpEntity(ContentTypes.`application/json`, "Query must contain renew=true"))
+      }
+    }
 }
