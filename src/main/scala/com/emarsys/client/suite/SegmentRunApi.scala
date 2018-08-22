@@ -18,22 +18,34 @@ trait SegmentRunApi extends SuiteClient {
     val path    = s"filter/$segmentId/runs"
     val request = RequestBuilding.Post(Uri(baseUrl(customerId) + path))
 
-    run[SegmentRunResult](request).map(_.data)
+    run[SegmentRunResultRaw](request).map(_.data).map(toInternalFormat)
   }
 
   def poll(customerId: Int, segmentId: Int, runId: String): Future[SegmentRunResult] = {
     val path    = s"filter/$segmentId/runs/$runId"
     val request = RequestBuilding.Get(Uri(baseUrl(customerId) + path))
 
-    run[SegmentRunResult](request).map(_.data)
+    run[SegmentRunResultRaw](request).map(_.data).map(toInternalFormat)
   }
+
+  private def toInternalFormat(segmentRunResult: SegmentRunResultRaw): SegmentRunResult =
+    SegmentRunResult(
+      segmentRunResult.run_id,
+      segmentRunResult.status,
+      segmentRunResult.result.map(toInternalFormat)
+    )
+
+  private def toInternalFormat(contactListDetails: ContactListDetailsRaw): ContactListDetails =
+    ContactListDetailsRaw.unapply(contactListDetails).map(ContactListDetails.tupled).get
 }
 
 object SegmentRunApi {
 
-  final case class SegmentRunResult(run_id: String, status: String, result: Option[ContactListDetails])
+  final case class SegmentRunResultRaw(run_id: String, status: String, result: Option[ContactListDetailsRaw])
+  final case class ContactListDetailsRaw(contact_list_id: Int, user_count: Int, opt_in_count: Int, duration: Int)
 
-  final case class ContactListDetails(contact_list_id: Int, user_count: Int, opt_in_count: Int, duration: Int)
+  final case class SegmentRunResult(runId: String, status: String, result: Option[ContactListDetails])
+  final case class ContactListDetails(contactListId: Int, userCount: Int, optInCount: Int, duration: Int)
 
   def apply(eConfig: EscherConfig)(implicit
                                    sys: ActorSystem,
