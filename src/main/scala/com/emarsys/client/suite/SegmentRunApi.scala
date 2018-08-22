@@ -31,13 +31,14 @@ trait SegmentRunApi extends SuiteClient {
 
 object SegmentRunApi {
 
-  final case class SegmentRunResult(run_id: String, status: String, count: Option[Int])
+  final case class SegmentRunResult(run_id: String, status: String, result: Option[ContactListDetails])
 
-  def apply(eConfig: EscherConfig)(
-    implicit
-    sys: ActorSystem,
-    mat: Materializer,
-    ex: ExecutionContextExecutor): SegmentRunApi = {
+  final case class ContactListDetails(contact_list_id: Int, user_count: Int, opt_in_count: Int, duration: Int)
+
+  def apply(eConfig: EscherConfig)(implicit
+                                   sys: ActorSystem,
+                                   mat: Materializer,
+                                   ex: ExecutionContextExecutor): SegmentRunApi = {
 
     new SuiteClient with SegmentRunApi {
       override implicit val system       = sys
@@ -47,5 +48,3 @@ object SegmentRunApi {
     }
   }
 }
-
-

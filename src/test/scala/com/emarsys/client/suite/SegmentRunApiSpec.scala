@@ -5,7 +5,7 @@ import akka.http.scaladsl.model._
 import akka.stream.scaladsl.Flow
 import akka.stream.{ActorMaterializer, Materializer}
 import com.emarsys.client.RestClientException
-import com.emarsys.client.suite.SegmentRunApi.SegmentRunResult
+import com.emarsys.client.suite.SegmentRunApi.{ContactListDetails, SegmentRunResult}
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory
 import org.scalatest.concurrent.ScalaFutures
@@ -40,9 +40,22 @@ class SegmentRunApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
   val customerId         = 215526938
   val segmentId          = 1000500238
   val runId              = "100024015"
-  val count              = 12
+  val contactListId      = 113214
+  val userCount          = 448
+  val optInCount         = 2
+  val duration           = 8
   val validStartResponse = s"""{"replyCode":0,"replyText":"OK","data":{"run_id":"$runId","status":"waiting"}}"""
-  val finishedResponse   = s"""{"replyCode":0,"replyText":"OK","data":{"run_id":"$runId","status":"done","count":$count}}"""
+  val finishedResponse =
+    s"""{"replyCode":0,"replyText":"OK","data":{
+       |"run_id":"$runId",
+       |"status":"done",
+       |"result":{
+       |"contact_list_id": $contactListId,
+       |"user_count": $userCount,
+       |"opt_in_count": $optInCount,
+       |"duration": $duration
+       |}
+       |}}""".stripMargin
   val failedResponse     = s"""{"replyCode":0,"replyText":"OK","data":{"run_id":"$runId","status":"error"}}"""
   val errorStartResponse = """{"replyCode":1008,"replyText":"error","data":""}"""
 
@@ -77,9 +90,10 @@ class SegmentRunApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
 
     "return with count and status done" when {
       "segment run finished" in {
+        val expectedDetails = ContactListDetails(contactListId, userCount, optInCount, duration)
         segmentApi(StatusCodes.OK, finishedResponse)
           .poll(customerId, segmentId, runId)
-          .map(_ shouldEqual SegmentRunResult(runId, "done", Some(count)))
+          .map(_ shouldEqual SegmentRunResult(runId, "done", Some(expectedDetails)))
       }
     }
 
@@ -92,7 +106,7 @@ class SegmentRunApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
     }
   }
 
-  def segmentApi(httpStatus: StatusCode, requestEntity: String) =
+  def segmentApi(httpStatus: StatusCode, response: String) =
     TestSegmentRunApi(escherConfig,
-                      HttpResponse(httpStatus, Nil, HttpEntity(ContentTypes.`application/json`, requestEntity)))
+                      HttpResponse(httpStatus, Nil, HttpEntity(ContentTypes.`application/json`, response)))
 }
