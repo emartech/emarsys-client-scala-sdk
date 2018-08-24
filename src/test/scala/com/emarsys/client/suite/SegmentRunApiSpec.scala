@@ -1,11 +1,11 @@
 package com.emarsys.client.suite
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.model.StatusCodes.{OK, InternalServerError}
+import akka.http.scaladsl.model.StatusCodes.{InternalServerError, OK}
 import akka.http.scaladsl.model._
 import akka.stream.scaladsl.Flow
 import akka.stream.{ActorMaterializer, Materializer}
-import com.emarsys.client.RestClientException
+import com.emarsys.client.RestClientErrors.RestClientException
 import com.emarsys.client.suite.SegmentRunApi.{ContactListDetails, SegmentRunResult}
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory

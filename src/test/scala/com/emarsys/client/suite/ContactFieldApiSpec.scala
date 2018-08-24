@@ -5,7 +5,7 @@ import akka.http.scaladsl.model._
 import akka.stream.scaladsl.Flow
 import akka.stream.{ActorMaterializer, Materializer}
 import akka.http.scaladsl.model.StatusCodes._
-import com.emarsys.client.RestClientException
+import com.emarsys.client.RestClientErrors.RestClientException
 import com.emarsys.client.suite.ContactFieldApi.{CreateFieldRequest, CreateFieldResponse, FieldItem}
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory

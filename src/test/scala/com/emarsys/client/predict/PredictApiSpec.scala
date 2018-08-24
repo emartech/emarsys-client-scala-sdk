@@ -7,7 +7,7 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.StatusCodes._
 import akka.stream.scaladsl.Flow
 import akka.stream.ActorMaterializer
-import com.emarsys.client.RestClientException
+import com.emarsys.client.RestClientErrors.RestClientException
 import com.emarsys.client.predict.PredictApi.{PredictIdentityAuth, PredictIdentityHash, Recommendation}
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory

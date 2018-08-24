@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
 import akka.stream.scaladsl.Flow
 import akka.stream.{ActorMaterializer, Materializer}
-import com.emarsys.client.RestClientException
+import com.emarsys.client.RestClientErrors.RestClientException
 import com.emarsys.client.suite.SegmentApi.{BehaviorCriteriaLeaf, ContactCriteriaLeaf, CreateRequest}
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory

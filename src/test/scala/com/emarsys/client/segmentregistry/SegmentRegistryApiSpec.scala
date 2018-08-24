@@ -15,7 +15,7 @@ import org.scalatest.time.{Millis, Seconds, Span}
 import spray.json._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.unmarshalling.Unmarshal
-import com.emarsys.client.RestClientException
+import com.emarsys.client.RestClientErrors.RestClientException
 import com.emarsys.formats.JodaDateTimeFormat._
 
 class SegmentRegistryApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with SegmentRegistryApi with BeforeAndAfterAll {

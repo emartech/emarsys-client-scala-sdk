@@ -10,8 +10,7 @@ import com.typesafe.config.ConfigFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{AsyncWordSpec, Matchers}
 import DataTransformers._
-import com.emarsys.client.RestClientException
-import com.emarsys.client.RestClient
+import com.emarsys.client.RestClientErrors.{InvalidResponseFormatException, RestClientException}
 
 import scala.concurrent.ExecutionContextExecutor
 
@@ -125,7 +124,7 @@ class ContactApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
       }
 
       "failed unmarshall" in {
-        recoverToSucceededIf[RestClient.InvalidResponseFormatException] {
+        recoverToSucceededIf[InvalidResponseFormatException] {
           contactApi(OK, "[]").getData(customerId, GetDataRequest("id", Nil, None))
         }
       }
