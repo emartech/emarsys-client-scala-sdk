@@ -8,6 +8,7 @@ import akka.http.scaladsl.model._
 import akka.stream.Materializer
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.emarsys.formats.SuiteSdkFormats._
+import com.emarsys.client.Config.emsApi.suite
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
@@ -26,7 +27,7 @@ trait SegmentRunApi extends SuiteClient {
 
   def poll(customerId: Int, segmentId: Int, runId: String): Future[SegmentRunResult] = {
     val path    = s"filter/$segmentId/runs/$runId"
-    val request = RequestBuilding.Get(Uri(baseUrl(customerId) + path))
+    val request = RequestBuilding.Get(Uri(baseUrl(customerId) + path).withPort(suite.port))
 
     run[SegmentRunResultRaw](request).map(_.data).map(toInternalFormat)
   }

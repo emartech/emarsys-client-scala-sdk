@@ -16,7 +16,9 @@ trait SuiteClient extends RestClient {
 
 
   val serviceName = suite.serviceName
-  lazy val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Http().outgoingConnectionHttps(suite.host)
+  override lazy val connectionFlow: Flow[HttpRequest, HttpResponse, _] =
+    if (suite.protocol == "https") Http().outgoingConnectionHttps(suite.host, suite.port)
+    else Http().outgoingConnection(suite.host, suite.port)
 
   protected def createCustomerHeader(customerId: Int) = RawHeader("X-SUITE-CUSTOMERID", customerId.toString)
 
