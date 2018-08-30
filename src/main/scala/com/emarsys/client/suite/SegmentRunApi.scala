@@ -17,7 +17,7 @@ trait SegmentRunApi extends SuiteClient {
   import SegmentRunApi._
 
   def start(customerId: Int, segmentId: Int, renewCache: Boolean = false): Future[SegmentRunResult] = {
-    val path    = s"filter/$segmentId/runs"
+    val path    = s"filter/$segmentId/runs/"
     val baseUri = Uri(baseUrl(customerId) + path)
     val uri     = if (renewCache) baseUri.withQuery(Query("renew" -> "true")) else baseUri
     val request = RequestBuilding.Post(uri)
@@ -26,7 +26,7 @@ trait SegmentRunApi extends SuiteClient {
   }
 
   def poll(customerId: Int, segmentId: Int, runId: String): Future[SegmentRunResult] = {
-    val path    = s"filter/$segmentId/runs/$runId"
+    val path    = s"filter/$segmentId/runs/$runId/"
     val request = RequestBuilding.Get(Uri(baseUrl(customerId) + path).withPort(suite.port))
 
     run[SegmentRunResultRaw](request).map(_.data).map(toInternalFormat)
