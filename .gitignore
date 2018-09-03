@@ -2,6 +2,7 @@
 *.log
 .DS_Store
 .vagrant
+local.*
 
 # sbt specific
 .cache
