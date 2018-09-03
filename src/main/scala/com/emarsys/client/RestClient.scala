@@ -61,7 +61,7 @@ trait RestClient extends EscherDirectives {
   }
 
   def runWithHeaders[S, D](request: HttpRequest, headers: List[String], retry: Int = maxRetryCount)(transformer: ResponseEntity => Future[S])(responseTransformer: Future[S] => D): D = {
-    responseTransformer(runE[S](request, headers, retry)(transformer).map {withHeaderErrorHandling[S](request)})
+    responseTransformer(runE[S](request, headers, retry)(transformer).map(withHeaderErrorHandling[S](request)))
   }
 
   def runE[S](request: HttpRequest, headers: List[String], retry: Int = maxRetryCount)(transformer: ResponseEntity => Future[S]): Future[Either[(Int, String), S]] = {
@@ -85,7 +85,6 @@ trait RestClient extends EscherDirectives {
 
   private def withHeaderErrorHandling[S](request: HttpRequest): PartialFunction[Either[(Int, String), S], S] = {
     case Left((status, responseBody)) =>
-      system.log.error("Request to {} failed with status: {} / body: {}", request.uri, status, responseBody)
       throw RestClientException(s"Rest client request failed for ${request.uri}", status, responseBody)
     case Right(response) => response
   }
