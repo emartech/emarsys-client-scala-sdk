@@ -17,8 +17,6 @@ scalacOptions ++= Seq(
   "-Xfatal-warnings"
 )
 
-resolvers += "escher-akka-http on GitHub" at "https://raw.github.com/emartech/escher-akka-http/master/releases"
-
 libraryDependencies ++= {
   val akkaHttpV   = "10.0.11"
   val scalaTestV  = "3.0.4"
@@ -28,7 +26,7 @@ libraryDependencies ++= {
     "com.typesafe.akka"     %% "akka-http-spray-json" % akkaHttpV,
     "com.github.fommil"     %% "spray-json-shapeless" % "1.4.0",
     "org.scalatest"         %% "scalatest"            % scalaTestV % "test",
-    "com.emarsys"           %% "escher-akka-http"     % "1.0.1",
+    "com.emarsys"           %% "escher-akka-http"     % "1.0.3",
     "joda-time"             %  "joda-time"            % "2.9.1",
     "org.joda"              %  "joda-convert"         % "2.0.1",
     "com.github.pureconfig" %% "pureconfig"           % "0.9.1"
