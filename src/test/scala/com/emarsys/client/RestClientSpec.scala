@@ -16,19 +16,19 @@ import scala.util.{Failure, Try}
 
 class RestClientSpec extends WordSpecLike with Matchers with ScalaFutures {
 
-  val escherConf = new EscherConfig(ConfigFactory.load().getConfig("ems-api.escher"))
-  implicit val sys          = ActorSystem("predict-api-test-system")
-  implicit val mat    = ActorMaterializer()
-  implicit val exe        = sys.dispatcher
-  val timeout = 3.seconds
-  val url = "http://test.example.com/testEndpoint"
+  val escherConf   = new EscherConfig(ConfigFactory.load().getConfig("ems-api.escher"))
+  implicit val sys = ActorSystem("predict-api-test-system")
+  implicit val mat = ActorMaterializer()
+  implicit val exe = sys.dispatcher
+  val timeout      = 3.seconds
+  val url          = "http://test.example.com/testEndpoint"
 
   trait Scope extends RestClient {
-    override implicit val system: ActorSystem = sys
-    override implicit val materializer: Materializer = mat
+    override implicit val system: ActorSystem                = sys
+    override implicit val materializer: Materializer         = mat
     override implicit val executor: ExecutionContextExecutor = exe
-    override val serviceName: String = "test"
-    override val escherConfig: EscherConfig = escherConf
+    override val serviceName: String                         = "test"
+    override val escherConfig: EscherConfig                  = escherConf
   }
 
   "RestClient" should {
@@ -45,7 +45,7 @@ class RestClientSpec extends WordSpecLike with Matchers with ScalaFutures {
       Await.result(runStreamWithHeader(HttpRequest(uri = url), Nil, 3).map(_.utf8String).runWith(Sink.seq), timeout) shouldBe Seq("{}")
     }
 
-    "runRawWithHeader return fail instantly on non server error" in new Scope{
+    "runRawWithHeader return fail instantly on non server error" in new Scope {
       var counter = 0
       val counterFn = () => {
         _: HttpRequest => {
@@ -59,7 +59,7 @@ class RestClientSpec extends WordSpecLike with Matchers with ScalaFutures {
       counter shouldBe 1
     }
 
-    "runRawWithHeader return fail if all attempt is failed with server error" in new Scope{
+    "runRawWithHeader return fail if all attempt is failed with server error" in new Scope {
       var counter = 0
       val counterFn = () => {
         _: HttpRequest => {
@@ -74,7 +74,7 @@ class RestClientSpec extends WordSpecLike with Matchers with ScalaFutures {
     }
 
 
-    "runRawWithHeader return ok if any attempt is ok in the retry range" in new Scope{
+    "runRawWithHeader return ok if any attempt is ok in the retry range" in new Scope {
       var counter = 0
       val counterFn = () => {
         _: HttpRequest => {

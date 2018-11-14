@@ -22,7 +22,7 @@ trait RestClient extends EscherDirectives {
   implicit val materializer: Materializer
   implicit val executor: ExecutionContextExecutor
 
-  val failLevel = if(Config.emsApi.restClient.errorOnFail) Logging.ErrorLevel else Logging.WarningLevel
+  val failLevel: Logging.LogLevel = if (Config.emsApi.restClient.errorOnFail) Logging.ErrorLevel else Logging.WarningLevel
   val connectionFlow: Flow[HttpRequest, HttpResponse, _]
   val serviceName: String
   lazy val maxRetryCount: Int = 0
@@ -64,7 +64,7 @@ trait RestClient extends EscherDirectives {
     responseTransformer(runE[S](request, headers, retry)(transformer).map(withHeaderErrorHandling[S](request)))
   }
 
-  def runE[S](request: HttpRequest, headers: List[String], retry: Int = maxRetryCount)(transformer: ResponseEntity => Future[S]): Future[Either[(Int, String), S]] = {
+  def runEWithServiceName[S](serviceName: String)(request: HttpRequest, headers: List[String], retry: Int = maxRetryCount)(transformer: ResponseEntity => Future[S]): Future[Either[(Int, String), S]] = {
     val headersToSign = headers.map(RawHeader(_, ""))
     for {
       signed <- signRequestWithHeaders(headersToSign)(serviceName)(executor, materializer)(request)
@@ -73,7 +73,7 @@ trait RestClient extends EscherDirectives {
         case Success(_) => transformer(response.entity).map(Right(_))
         case ServerError(_) if retry > 0 => Unmarshal(response.entity).to[String].flatMap { _ =>
           system.log.info("Retrying request: {} / {} attempt(s) left", request.uri, retry - 1)
-          runE[S](request, headers, retry - 1)(transformer)
+          runEWithServiceName[S](serviceName)(request, headers, retry - 1)(transformer)
         }
         case status => Unmarshal(response.entity).to[String].map { responseBody =>
           system.log.log(failLevel,"Request to {} failed with status: {} / body: {}", request.uri, status, responseBody)
@@ -82,6 +82,9 @@ trait RestClient extends EscherDirectives {
       }
     } yield result
   }
+
+  def runE[S](request: HttpRequest, headers: List[String], retry: Int = maxRetryCount)(transformer: ResponseEntity => Future[S]): Future[Either[(Int, String), S]] =
+    runEWithServiceName(this.serviceName)(request, headers, retry)(transformer)
 
   private def withHeaderErrorHandling[S](request: HttpRequest): PartialFunction[Either[(Int, String), S], S] = {
     case Left((status, responseBody)) =>
