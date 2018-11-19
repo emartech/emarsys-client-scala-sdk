@@ -64,10 +64,13 @@ trait RestClient extends EscherDirectives {
     responseTransformer(runE[S](request, headers, retry)(transformer).map(withHeaderErrorHandling[S](request)))
   }
 
-  def runEWithServiceName[S](serviceName: String)(request: HttpRequest, headers: List[String], retry: Int = maxRetryCount)(transformer: ResponseEntity => Future[S]): Future[Either[(Int, String), S]] = {
+  def runE[S](request: HttpRequest, headers: List[String], retry: Int = maxRetryCount)(transformer: ResponseEntity => Future[S]): Future[Either[(Int, String), S]] =
+    runEWithServiceName(Some(this.serviceName))(request, headers, retry)(transformer)
+
+  def runEWithServiceName[S](serviceName: Option[String])(request: HttpRequest, headers: List[String], retry: Int = maxRetryCount)(transformer: ResponseEntity => Future[S]): Future[Either[(Int, String), S]] = {
     val headersToSign = headers.map(RawHeader(_, ""))
     for {
-      signed <- signRequestWithHeaders(headersToSign)(serviceName)(executor, materializer)(request)
+      signed <- createRequest(serviceName, request, headersToSign)
       response <- sendRequest(signed)
       result <- response.status match {
         case Success(_) => transformer(response.entity).map(Right(_))
@@ -83,8 +86,11 @@ trait RestClient extends EscherDirectives {
     } yield result
   }
 
-  def runE[S](request: HttpRequest, headers: List[String], retry: Int = maxRetryCount)(transformer: ResponseEntity => Future[S]): Future[Either[(Int, String), S]] =
-    runEWithServiceName(this.serviceName)(request, headers, retry)(transformer)
+  private def createRequest[S](serviceName: Option[String], request: HttpRequest, headersToSign: List[RawHeader]) = {
+    serviceName.fold(Future.successful(request)) { serviceName =>
+      signRequestWithHeaders(headersToSign)(serviceName)(executor, materializer)(request)
+    }
+  }
 
   private def withHeaderErrorHandling[S](request: HttpRequest): PartialFunction[Either[(Int, String), S], S] = {
     case Left((status, responseBody)) =>

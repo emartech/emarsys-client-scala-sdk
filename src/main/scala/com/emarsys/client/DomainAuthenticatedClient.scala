@@ -15,12 +15,12 @@ trait DomainAuthenticatedClient extends RestClient {
     runEWithServiceName(resolveServiceName(request.uri))(request, Nil, 10)(transformer)
   }
 
-  private def resolveServiceName(uri: Uri): String =
+  private def resolveServiceName(uri: Uri): Option[String] =
     escherConfig.trustedServices find {
       getDomains(_) contains getAddress(uri)
     } map {
       _.getString("name")
-    } getOrElse serviceName
+    }
 
   private def getDomains(config: com.typesafe.config.Config): List[String] =
     try {
@@ -34,7 +34,7 @@ trait DomainAuthenticatedClient extends RestClient {
 }
 
 object DomainAuthenticatedClient {
-  def apply(eConfig: EscherConfig, defaultServiceName: String)(
+  def apply(eConfig: EscherConfig)(
       implicit
       sys: ActorSystem,
       mat: Materializer,
@@ -45,7 +45,6 @@ object DomainAuthenticatedClient {
       override implicit val materializer: Materializer         = mat
       override implicit val executor: ExecutionContextExecutor = ex
       override val escherConfig: EscherConfig                  = eConfig
-      override val serviceName: String                         = defaultServiceName
     }
   }
 }

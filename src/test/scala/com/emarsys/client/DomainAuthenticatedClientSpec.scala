@@ -24,7 +24,6 @@ class DomainAuthenticatedClientSpec extends WordSpecLike with Matchers {
     override val escherConfig = new EscherConfig(ConfigFactory.load().getConfig("ems-api.escher"))
     override val serviceName  = "default"
 
-    val defaultEscherKey = "default-key"
     val service1EscherKey = "service1-key"
 
     def callSendRequest(uri: Uri) =
@@ -42,9 +41,9 @@ class DomainAuthenticatedClientSpec extends WordSpecLike with Matchers {
 
   "#sendRequest" when {
     "no trusted service found in config with the given domain" should {
-      "must sign the request with default credentials" in new Scope {
+      "not sign the request" in new Scope {
         override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = createConnectionFlow { request =>
-          getXEmsAuthHeader(request).getOrElse("") should include (defaultEscherKey)
+          getXEmsAuthHeader(request) shouldBe None
         }
 
         private val defaultUri = Uri("https://undefined.com")
@@ -54,7 +53,7 @@ class DomainAuthenticatedClientSpec extends WordSpecLike with Matchers {
     }
 
     "trusted service found in config by the given domain" should {
-      "must sign the request with service1 credentials" in new Scope {
+      "sign the request with service1 credentials" in new Scope {
         override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = createConnectionFlow { request =>
           getXEmsAuthHeader(request).getOrElse("") should include(service1EscherKey)
         }
@@ -66,7 +65,7 @@ class DomainAuthenticatedClientSpec extends WordSpecLike with Matchers {
     }
 
     "trusted service found in config by the secondary domain" should {
-      "must sign the request with service1 credentials" in new Scope {
+      "sign the request with service1 credentials" in new Scope {
         override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = createConnectionFlow { request =>
           getXEmsAuthHeader(request).getOrElse("") should include (service1EscherKey)
         }
