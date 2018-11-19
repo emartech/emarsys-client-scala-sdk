@@ -53,7 +53,9 @@ inThisBuild(List(
     Developer("miklos-martin", "Miklos Martin", "miklos.martin@gmail.com", url("https://github.com/miklos-martin")),
     Developer("stsatlantis", "Barnabas Olah", "stsatlantis@gmail.com", url("https://github.com/stsatlantis")),
     Developer("suliatis", "Attila Suli", "attila.suli@emarsys.com", url("https://github.com/suliatis")),
-    Developer("tg44", "Gergo Torcsvari", "gergo.torcsvari@emarsys.com", url("https://github.com/tg44"))
+    Developer("tg44", "Gergo Torcsvari", "gergo.torcsvari@emarsys.com", url("https://github.com/tg44")),
+    Developer("kartonfarkas", "Gabor Manner", "gabor.manner@emarsys.com", url("https://github.com/kartonfarkas")),
+    Developer("dani3lb", "Daniel Balazs", "daniel.balazs@emarsys.com", url("https://github.com/dani3lb"))
   ),
   scmInfo := Some(ScmInfo(url("https://github.com/emartech/emarsys-client-scala-sdk"), "scm:git:git@github.com:emartech/emarsys-client-scala-sdk.git")),
 
