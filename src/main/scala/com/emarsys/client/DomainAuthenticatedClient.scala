@@ -1,8 +1,9 @@
 package com.emarsys.client
 import akka.actor.ActorSystem
-import akka.http.scaladsl.model.{HttpRequest, ResponseEntity, Uri}
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.{HttpRequest, HttpResponse, ResponseEntity, Uri}
 import akka.stream.Materializer
-import com.emarsys.client.suite.SuiteClient
+import akka.stream.scaladsl.Flow
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigException
 
@@ -12,7 +13,7 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 trait DomainAuthenticatedClient extends RestClient {
 
   def sendRequest[S](request: HttpRequest)(transformer: ResponseEntity => Future[S]): Future[Either[(Int, String), S]] = {
-    runEWithServiceName(resolveServiceName(request.uri))(request, Nil, 10)(transformer)
+    runEWithServiceName(resolveServiceName(request.uri))(request, Nil, 3)(transformer)
   }
 
   private def resolveServiceName(uri: Uri): Option[String] =
@@ -34,17 +35,22 @@ trait DomainAuthenticatedClient extends RestClient {
 }
 
 object DomainAuthenticatedClient {
-  def apply(eConfig: EscherConfig)(
-      implicit
-      sys: ActorSystem,
-      mat: Materializer,
-      ex: ExecutionContextExecutor): DomainAuthenticatedClient = {
+  def apply(eConfig: EscherConfig)(implicit
+                                   sys: ActorSystem,
+                                   mat: Materializer,
+                                   ex: ExecutionContextExecutor): DomainAuthenticatedClient = {
 
-    new SuiteClient with DomainAuthenticatedClient {
+    new DomainAuthenticatedClient {
       override implicit val system: ActorSystem                = sys
       override implicit val materializer: Materializer         = mat
       override implicit val executor: ExecutionContextExecutor = ex
       override val escherConfig: EscherConfig                  = eConfig
+      override val serviceName: String                         = ""
+
+      private val http = Http(sys)
+
+      override val connectionFlow: Flow[HttpRequest, HttpResponse, _] =
+        Flow[HttpRequest].mapAsync(1)(request => http.singleRequest(request))
     }
   }
 }
