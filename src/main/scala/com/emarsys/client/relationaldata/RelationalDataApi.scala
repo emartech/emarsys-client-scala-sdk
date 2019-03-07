@@ -21,7 +21,7 @@ trait RelationalDataApi extends RestClient {
 
   val serviceName = relationalData.serviceName
   val baseUrl = Uri(scheme = s"${relationalData.protocol}",
-                    authority = Authority(host = Host(relationalData.host), port = relationalData.port)) + relationalData.basePath
+                    authority = Authority(host = Host(relationalData.host))) + relationalData.basePath
 
   final val customerIdHeader = "x-suite-customerid"
 
