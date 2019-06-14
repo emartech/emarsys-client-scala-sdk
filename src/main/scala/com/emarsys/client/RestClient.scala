@@ -17,9 +17,14 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 import spray.json.DeserializationException
 
 import scala.concurrent.duration._
+import scala.util.control.NonFatal
+import com.emarsys.client.RestClient.SuccessfulRequest
+import com.emarsys.client.RestClient.FailureResponse
+import com.emarsys.client.RestClient.RequestError
 
 trait RestClient extends EscherDirectives {
   import RestClientErrors._
+  import RestClient._
 
   implicit val system: ActorSystem
   implicit val materializer: Materializer
@@ -90,16 +95,15 @@ trait RestClient extends EscherDirectives {
       headers: List[String],
       retry: Int = maxRetryCount
   )(transformer: ResponseEntity => Future[S]): Future[Either[(Int, String), S]] = {
-    def shouldRetry(error: Either[Throwable, HttpResponse]) = {
-      error match {
-        case Left(_: BufferOverflowException) => false
-        case Left(_)                          => true
-        case Right(response) =>
-          response.status match {
-            case ServerError(_) => true
-            case _              => false
-          }
-      }
+    def shouldRetry(result: RequestResult) = result match {
+      case SuccessfulRequest(_) => false
+      case FailureResponse(response) =>
+        response.status match {
+          case ServerError(_) => true
+          case _              => false
+        }
+      case RequestError(overflow: BufferOverflowException) => false
+      case RequestError(error)                             => true
     }
 
     def errorStatusMap(error: Throwable) = error match {
@@ -114,47 +118,65 @@ trait RestClient extends EscherDirectives {
       signed   <- createRequest(serviceName, request, headersToSign)
       response <- sendRequestWithRetry(signed, retry)(shouldRetry)(errorStatusMap)
       result <- response match {
-        case Left(value)  => Future.successful(Left(value))
         case Right(value) => transformer(value.entity).map(Right(_))
+        case Left(value)  => Future.successful(Left(value))
       }
     } yield result
   }
 
   private def sendRequestWithRetry[S](request: HttpRequest, maxRetries: Int)(
-      shouldRetry: Either[Throwable, HttpResponse] => Boolean
+      shouldRetry: RequestResult => Boolean
   )(
       errorStatusMap: Throwable => (Int, String)
   ): Future[Either[(Int, String), HttpResponse]] = {
-    def handleResponse(retriesLeft: Int)(response: HttpResponse): Future[Either[(Int, String), HttpResponse]] = {
-      if (response.status.isSuccess()) Future.successful(Right(response))
-      else handleFailedResponse(retriesLeft, response)
+    def wrapResponse(response: HttpResponse): RequestResult = {
+      if (response.status.isSuccess()) SuccessfulRequest(response)
+      else FailureResponse(response)
     }
 
-    def handleFailedResponse(retriesLeft: Int, response: HttpResponse) = {
+    def wrapException: PartialFunction[Throwable, RequestResult] = {
+      case NonFatal(error) => RequestError(error)
+    }
+
+    def handleFailedResponse(retriesLeft: Int, fr: FailureResponse) = {
+      val response = fr.response
       consumeResponse[String](response).flatMap { responseBody =>
-        if (retriesLeft > 0 && shouldRetry(Right(response))) doRetry(request, responseBody, retriesLeft - 1)
+        if (retriesLeft > 0 && shouldRetry(fr)) doRetry(responseBody, retriesLeft - 1)
         else failRequest(response.status.intValue(), request, responseBody)
       }
     }
 
-    def handleException(retriesLeft: Int): PartialFunction[Throwable, Future[Either[(Int, String), HttpResponse]]] = {
-      case ex if retriesLeft > 0 && shouldRetry(Left(ex)) => doRetry(request, ex.getMessage, retriesLeft - 1)
-      case ex =>
-        val (status, cause) = errorStatusMap(ex)
+    def handleException(retriesLeft: Int, re: RequestError) = {
+      val error = re.error
+      if (retriesLeft > 0 && shouldRetry(re)) {
+        doRetry(error.getMessage(), retriesLeft - 1)
+      } else {
+        val (status, cause) = errorStatusMap(error)
         failRequest(status, request, cause)
+      }
     }
 
-    def doRetry(request: HttpRequest, cause: String, retriesLeft: Int): Future[Either[(Int, String), HttpResponse]] = {
+    def getDelay(retriesLeft: Int): FiniteDuration = {
+      val n = maxRetries - retriesLeft
+      initialDelay * (1 << n) // Math.pow(2, n)... for ints...
+    }
+
+    def doRetry(cause: String, retriesLeft: Int): Future[Either[(Int, String), HttpResponse]] = {
       logRetry(request, retriesLeft, cause)
-      val n                     = maxRetries - retriesLeft
-      val delay: FiniteDuration = initialDelay * (1 << n) // Math.pow(2, n)
+      val delay = getDelay(retriesLeft)
       after(delay, system.scheduler)(loop(retriesLeft))
     }
 
     def loop(retriesLeft: Int): Future[Either[(Int, String), HttpResponse]] = {
-      sendRequest(request)
-        .flatMap(handleResponse(retriesLeft))
-        .recoverWith(handleException(retriesLeft))
+      val result = sendRequest(request)
+        .map(wrapResponse)
+        .recover(wrapException)
+
+      result.flatMap {
+        case SuccessfulRequest(response) => Future.successful(Right(response))
+        case fr: FailureResponse         => handleFailedResponse(retriesLeft, fr)
+        case re: RequestError            => handleException(retriesLeft, re)
+      }
     }
 
     loop(maxRetries)
@@ -188,18 +210,12 @@ trait RestClient extends EscherDirectives {
       throw RestClientException(s"Rest client request failed for ${request.uri}", status, responseBody)
     case Right(response) => response
   }
+}
 
-  implicit class RichUri(uri: Uri) {
-    def +(pathSuffix: String): Uri = {
-      val pathSuffixWithSlash = if (pathSuffix.startsWith("/")) {
-        pathSuffix
-      } else {
-        "/" + pathSuffix
-      }
+object RestClient {
+  sealed private[RestClient] trait RequestResult
+  final private[RestClient] case class SuccessfulRequest(response: HttpResponse) extends RequestResult
+  final private[RestClient] case class FailureResponse(response: HttpResponse)   extends RequestResult
+  final private[RestClient] case class RequestError(error: Throwable)            extends RequestResult
 
-      val path = uri.path
-
-      uri.withPath(path + pathSuffixWithSlash)
-    }
-  }
 }
