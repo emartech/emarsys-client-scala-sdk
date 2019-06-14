@@ -15,7 +15,7 @@ import org.scalatest.time.{Millis, Seconds, Span}
 import spray.json._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.unmarshalling.Unmarshal
-import com.emarsys.client.RestClientErrors.RestClientException
+import com.emarsys.client.RestClientErrors.{InvalidResponseFormatException, RestClientException}
 import com.emarsys.formats.JodaDateTimeFormat._
 
 class SegmentRegistryApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with SegmentRegistryApi with BeforeAndAfterAll {
@@ -94,8 +94,10 @@ class SegmentRegistryApiSpec extends AsyncWordSpec with Matchers with ScalaFutur
       }
 
       "date format is invalid in response" in {
-        recoverToSucceededIf[IllegalArgumentException] {
-          update(invalidDateFormatCustomerId, segmentData)
+        recoverToSucceededIf[InvalidResponseFormatException] {
+          val a = update(invalidDateFormatCustomerId, segmentData)
+          a.failed.foreach(e => e.printStackTrace())
+          a
         }
       }
     }
@@ -127,7 +129,7 @@ class SegmentRegistryApiSpec extends AsyncWordSpec with Matchers with ScalaFutur
       }
 
       "date format is invalid in response" in {
-        recoverToSucceededIf[IllegalArgumentException] {
+        recoverToSucceededIf[InvalidResponseFormatException] {
           updateByRegistryId(invalidDateFormatCustomerId, segmentData)
         }
       }
@@ -157,7 +159,7 @@ class SegmentRegistryApiSpec extends AsyncWordSpec with Matchers with ScalaFutur
       }
 
       "date format is invalid in response" in {
-        recoverToSucceededIf[IllegalArgumentException] {
+        recoverToSucceededIf[InvalidResponseFormatException] {
           create(invalidDateFormatCustomerId, segmentCreatePayload)
         }
       }

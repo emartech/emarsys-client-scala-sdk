@@ -6,6 +6,8 @@ import org.joda.time.format.DateTimeFormat
 import spray.json.JsonFormat
 import spray.json._
 
+import scala.util.control.NonFatal
+
 object JodaDateTimeFormat extends DefaultJsonProtocol with FamilyFormats {
 
   val dateTimePattern = "yyyy-MM-dd HH:mm:ss"
@@ -15,8 +17,11 @@ object JodaDateTimeFormat extends DefaultJsonProtocol with FamilyFormats {
     def write(obj: DateTime) = JsString(obj.toDateTime(DateTimeZone.UTC).toString(dateTimePattern))
 
     def read(json: JsValue) = json match {
-      case JsString(time) => DateTime.parse(time, DateTimeFormat.forPattern(dateTimePattern).withZone(DateTimeZone.UTC))
-      case _              => throw DeserializationException("Date expected in string")
+      case JsString(time) =>
+        try {
+          DateTime.parse(time, DateTimeFormat.forPattern(dateTimePattern).withZone(DateTimeZone.UTC))
+        } catch { case NonFatal(ex) => throw DeserializationException("Failed to deserialize datetime", ex) }
+      case _ => throw DeserializationException("Date expected in string")
     }
   }
 
