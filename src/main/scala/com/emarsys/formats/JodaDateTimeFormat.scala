@@ -12,11 +12,11 @@ object JodaDateTimeFormat extends DefaultJsonProtocol with FamilyFormats {
 
   val dateTimePattern = "yyyy-MM-dd HH:mm:ss"
 
-  implicit def jodaDateTimeFormat = new JsonFormat[DateTime] {
+  implicit def jodaDateTimeFormat: JsonFormat[DateTime] = new JsonFormat[DateTime] {
 
-    def write(obj: DateTime) = JsString(obj.toDateTime(DateTimeZone.UTC).toString(dateTimePattern))
+    def write(obj: DateTime): JsValue = JsString(obj.toDateTime(DateTimeZone.UTC).toString(dateTimePattern))
 
-    def read(json: JsValue) = json match {
+    def read(json: JsValue): DateTime = json match {
       case JsString(time) =>
         try {
           DateTime.parse(time, DateTimeFormat.forPattern(dateTimePattern).withZone(DateTimeZone.UTC))

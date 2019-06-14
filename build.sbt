@@ -1,4 +1,4 @@
-val scalaV = "2.12.6"
+val scalaV = "2.12.8"
 
 name := "emarsys-client-scala-sdk"
 organization := "com.emarsys"
@@ -34,7 +34,7 @@ libraryDependencies ++= {
   )
 }
 
-addCompilerPlugin("io.tryp" % "splain" % "0.3.1" cross CrossVersion.patch)
+addCompilerPlugin("io.tryp" % "splain" % "0.4.1" cross CrossVersion.patch)
 
 scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
 
