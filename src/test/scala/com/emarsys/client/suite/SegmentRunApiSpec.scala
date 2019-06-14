@@ -107,8 +107,10 @@ class SegmentRunApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
   }
 
   def segmentApi(httpStatus: StatusCode, response: String) =
-    TestSegmentRunApi(escherConfig,
-                      HttpResponse(httpStatus, Nil, HttpEntity(ContentTypes.`application/json`, response)))
+    TestSegmentRunApi(
+      escherConfig,
+      HttpResponse(httpStatus, Nil, HttpEntity(ContentTypes.`application/json`, response))
+    )
 
   def segmentApiForceRenew(httpStatus: StatusCode, response: String) =
     TestSegmentRunApiForceRenew(escherConfig, response)
@@ -119,14 +121,16 @@ class SegmentRunApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
 
 object TestSegmentRunApi {
 
-  def apply(eConfig: EscherConfig, response: HttpResponse)(implicit
-                                                           sys: ActorSystem,
-                                                           mat: Materializer,
-                                                           ex: ExecutionContextExecutor) =
+  def apply(eConfig: EscherConfig, response: HttpResponse)(
+      implicit
+      sys: ActorSystem,
+      mat: Materializer,
+      ex: ExecutionContextExecutor
+  ) =
     new SuiteClient with SegmentRunApi {
-      override implicit val system       = sys
-      override implicit val materializer = mat
-      override implicit val executor     = ex
+      implicit override val system       = sys
+      implicit override val materializer = mat
+      implicit override val executor     = ex
       override val escherConfig          = eConfig
 
       override lazy val connectionFlow = Flow[HttpRequest].map(_ => response)
@@ -135,46 +139,54 @@ object TestSegmentRunApi {
 
 object TestSegmentRunApiForceRenew {
 
-  def apply(eConfig: EscherConfig, response: String)(implicit
-                                                     sys: ActorSystem,
-                                                     mat: Materializer,
-                                                     ex: ExecutionContextExecutor) =
+  def apply(eConfig: EscherConfig, response: String)(
+      implicit
+      sys: ActorSystem,
+      mat: Materializer,
+      ex: ExecutionContextExecutor
+  ) =
     new SuiteClient with SegmentRunApi {
-      override implicit val system       = sys
-      override implicit val materializer = mat
-      override implicit val executor     = ex
+      implicit override val system       = sys
+      implicit override val materializer = mat
+      implicit override val executor     = ex
       override val escherConfig          = eConfig
 
       override lazy val connectionFlow = Flow[HttpRequest].map {
         case HttpRequest(HttpMethods.POST, uri, _, _, _) if uri.rawQueryString.get == "renew=true" =>
           HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, response))
         case _ =>
-          HttpResponse(InternalServerError,
-                       Nil,
-                       HttpEntity(ContentTypes.`application/json`, "Query must contain renew=true"))
+          HttpResponse(
+            InternalServerError,
+            Nil,
+            HttpEntity(ContentTypes.`application/json`, "Query must contain renew=true")
+          )
       }
     }
 }
 
 object TestSegmentRunApiNoRenew {
 
-  def apply(eConfig: EscherConfig, response: String)(implicit
-                                                     sys: ActorSystem,
-                                                     mat: Materializer,
-                                                     ex: ExecutionContextExecutor) =
+  def apply(eConfig: EscherConfig, response: String)(
+      implicit
+      sys: ActorSystem,
+      mat: Materializer,
+      ex: ExecutionContextExecutor
+  ) =
     new SuiteClient with SegmentRunApi {
-      override implicit val system       = sys
-      override implicit val materializer = mat
-      override implicit val executor     = ex
+      implicit override val system       = sys
+      implicit override val materializer = mat
+      implicit override val executor     = ex
       override val escherConfig          = eConfig
 
       override lazy val connectionFlow = Flow[HttpRequest].map {
         case HttpRequest(HttpMethods.POST, uri, _, _, _) if uri.rawQueryString.isEmpty =>
           HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, response))
         case _ =>
-          HttpResponse(InternalServerError,
-                       Nil,
-                       HttpEntity(ContentTypes.`application/json`, "Query must contain renew=true"))
+          HttpResponse(
+            InternalServerError,
+            Nil,
+            HttpEntity(ContentTypes.`application/json`, "Query must contain renew=true")
+          )
       }
     }
 }

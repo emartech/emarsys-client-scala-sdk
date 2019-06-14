@@ -23,17 +23,16 @@ class SegmentApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
 
   object TestSegmentApi {
 
-    def apply(eConfig: EscherConfig,
-              response: HttpResponse)(
-      implicit
-      sys: ActorSystem,
-      mat: Materializer,
-      ex: ExecutionContextExecutor) =
-
+    def apply(eConfig: EscherConfig, response: HttpResponse)(
+        implicit
+        sys: ActorSystem,
+        mat: Materializer,
+        ex: ExecutionContextExecutor
+    ) =
       new SuiteClient with SegmentApi {
-        override implicit val system       = sys
-        override implicit val materializer = mat
-        override implicit val executor     = ex
+        implicit override val system       = sys
+        implicit override val materializer = mat
+        implicit override val executor     = ex
         override val escherConfig          = eConfig
 
         override lazy val connectionFlow = Flow[HttpRequest].map(_ => response)
@@ -63,13 +62,22 @@ class SegmentApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
         recoverToSucceededIf[RestClientException] {
           segmentApi(StatusCodes.BadRequest, validationFailedResponse).create(
             customerId,
-            CreateRequest("segment", Some(ContactCriteriaLeaf("criteria", Right("email"), "contains", "@gmail.com")), Some(BehaviorCriteriaLeaf("criteria")), "", None))
+            CreateRequest(
+              "segment",
+              Some(ContactCriteriaLeaf("criteria", Right("email"), "contains", "@gmail.com")),
+              Some(BehaviorCriteriaLeaf("criteria")),
+              "",
+              None
+            )
+          )
         }
       }
     }
   }
 
   def segmentApi(httpStatus: StatusCode, requestEntity: String) =
-    TestSegmentApi(escherConfig,
-                   HttpResponse(httpStatus, Nil, HttpEntity(ContentTypes.`application/json`, requestEntity)))
+    TestSegmentApi(
+      escherConfig,
+      HttpResponse(httpStatus, Nil, HttpEntity(ContentTypes.`application/json`, requestEntity))
+    )
 }

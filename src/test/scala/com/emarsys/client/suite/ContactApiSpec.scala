@@ -14,7 +14,6 @@ import com.emarsys.client.RestClientErrors.{InvalidResponseFormatException, Rest
 
 import scala.concurrent.ExecutionContextExecutor
 
-
 class ContactApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
 
   implicit val system       = ActorSystem("contact-api-test-system")
@@ -25,12 +24,14 @@ class ContactApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
 
   object TestContactApi {
 
-    def apply(eConfig: EscherConfig,
-              response: HttpResponse)(implicit sys: ActorSystem, mat: Materializer, ex: ExecutionContextExecutor) =
+    def apply(
+        eConfig: EscherConfig,
+        response: HttpResponse
+    )(implicit sys: ActorSystem, mat: Materializer, ex: ExecutionContextExecutor) =
       new SuiteClient with ContactApi {
-        override implicit val system       = sys
-        override implicit val materializer = mat
-        override implicit val executor     = ex
+        implicit override val system       = sys
+        implicit override val materializer = mat
+        implicit override val executor     = ex
         override val escherConfig          = eConfig
 
         override lazy val connectionFlow = Flow[HttpRequest].map(_ => response)
@@ -83,16 +84,19 @@ class ContactApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
 
       "return existing fields in case of successful response" in {
         contactApi(OK, validResponse).getData(customerId, GetDataRequest("id", Nil, None)) map { response =>
-          response.data shouldEqual GetDataResult(List(
-                                                    Map("id"        -> Right(Some("123")),
-                                                        "uid"       -> Right(Some("abc")),
-                                                        "0"         -> Right(None),
-                                                        "1"         -> Right(Some("Peter")),
-                                                        "100007887" -> Right(None),
-                                                        "multi"     -> Left(List(1))
-                                                    )
-                                                  ),
-                                                  Nil)
+          response.data shouldEqual GetDataResult(
+            List(
+              Map(
+                "id"        -> Right(Some("123")),
+                "uid"       -> Right(Some("abc")),
+                "0"         -> Right(None),
+                "1"         -> Right(Some("Peter")),
+                "100007887" -> Right(None),
+                "multi"     -> Left(List(1))
+              )
+            ),
+            Nil
+          )
         }
       }
 
@@ -100,8 +104,11 @@ class ContactApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
         contactApi(OK, falseResultResponse).getData(customerId, GetDataRequest("id", Nil, None)) map { response =>
           response.data shouldEqual GetDataResult(
             Nil,
-            List(GetDataError("ironman@example.com", 2008, "No contact found with the external id: 3"),
-                 GetDataError("hulk@example.com", 2008, "No contact found with the external id: 3")))
+            List(
+              GetDataError("ironman@example.com", 2008, "No contact found with the external id: 3"),
+              GetDataError("hulk@example.com", 2008, "No contact found with the external id: 3")
+            )
+          )
         }
       }
 
@@ -133,7 +140,9 @@ class ContactApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
   }
 
   def contactApi(httpStatus: StatusCode, requestEntity: String) = {
-    TestContactApi(escherConfig,
-                   HttpResponse(httpStatus, Nil, HttpEntity(ContentTypes.`application/json`, requestEntity)))
+    TestContactApi(
+      escherConfig,
+      HttpResponse(httpStatus, Nil, HttpEntity(ContentTypes.`application/json`, requestEntity))
+    )
   }
 }

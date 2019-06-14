@@ -39,12 +39,14 @@ trait ContactFieldApi extends SuiteClient {
     run[ListRawResponseData](request) map listResponseTransformer
   }
 
-  private def predictFilter(fields: ListResponse) = fields.copy(data = fields.data.filter(_.name.getOrElse("").toLowerCase contains "predict"))
+  private def predictFilter(fields: ListResponse) =
+    fields.copy(data = fields.data.filter(_.name.getOrElse("").toLowerCase contains "predict"))
 
-  val listResponseTransformer: (SuiteRawResponse[ListRawResponseData]) => ListResponse = r => r.data match {
-    case Right(d) => ListResponse(d)
-    case Left(_)  => ListResponse(Nil)
-  }
+  val listResponseTransformer: (SuiteRawResponse[ListRawResponseData]) => ListResponse = r =>
+    r.data match {
+      case Right(d) => ListResponse(d)
+      case Left(_)  => ListResponse(Nil)
+    }
 
   def createField(customerId: Int, payload: CreateFieldRequest): Future[CreateFieldResponse] = {
     val request = RequestBuilding.Post(Uri(baseUrl(customerId) + "field"), payload)
@@ -63,9 +65,9 @@ object ContactFieldApi {
 
   def apply(eConfig: EscherConfig)(implicit sys: ActorSystem, mat: Materializer, ex: ExecutionContextExecutor) =
     new SuiteClient with ContactFieldApi {
-      override implicit val system       = sys
-      override implicit val materializer = mat
-      override implicit val executor     = ex
+      implicit override val system       = sys
+      implicit override val materializer = mat
+      implicit override val executor     = ex
       override val escherConfig          = eConfig
     }
 }

@@ -19,8 +19,9 @@ object DataTransformers {
     case GetDataRawResult(Left(_), e)  => GetDataResult(Nil, e)
   }
 
-  val getDataResponseTransformer: (SuiteRawResponse[GetDataRawResponseData]) => GetDataResponse = r => r.data match {
-    case Right(d) => GetDataResponse(getDataResultTransformer(d))
-    case Left(_)  => GetDataResponse(GetDataResult(Nil, Nil))
-  }
+  val getDataResponseTransformer: (SuiteRawResponse[GetDataRawResponseData]) => GetDataResponse = r =>
+    r.data match {
+      case Right(d) => GetDataResponse(getDataResultTransformer(d))
+      case Left(_)  => GetDataResponse(GetDataResult(Nil, Nil))
+    }
 }

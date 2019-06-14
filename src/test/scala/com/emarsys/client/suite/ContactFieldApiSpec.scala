@@ -24,12 +24,14 @@ class ContactFieldApiSpec extends AsyncWordSpec with Matchers with ScalaFutures 
 
   object TestContactFieldApi {
 
-    def apply(eConfig: EscherConfig,
-              response: HttpResponse)(implicit sys: ActorSystem, mat: Materializer, ex: ExecutionContextExecutor) =
+    def apply(
+        eConfig: EscherConfig,
+        response: HttpResponse
+    )(implicit sys: ActorSystem, mat: Materializer, ex: ExecutionContextExecutor) =
       new SuiteClient with ContactFieldApi {
-        override implicit val system       = sys
-        override implicit val materializer = mat
-        override implicit val executor     = ex
+        implicit override val system       = sys
+        implicit override val materializer = mat
+        implicit override val executor     = ex
         override val escherConfig          = eConfig
 
         override lazy val connectionFlow = Flow[HttpRequest].map(_ => response)
@@ -162,7 +164,9 @@ class ContactFieldApiSpec extends AsyncWordSpec with Matchers with ScalaFutures 
   }
 
   private def contactField(httpStatus: StatusCode, requestEntity: String) = {
-    TestContactFieldApi(escherConfig,
-                        HttpResponse(httpStatus, Nil, HttpEntity(ContentTypes.`application/json`, requestEntity)))
+    TestContactFieldApi(
+      escherConfig,
+      HttpResponse(httpStatus, Nil, HttpEntity(ContentTypes.`application/json`, requestEntity))
+    )
   }
 }

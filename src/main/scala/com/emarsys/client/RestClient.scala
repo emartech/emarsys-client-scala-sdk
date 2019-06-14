@@ -25,17 +25,20 @@ trait RestClient extends EscherDirectives {
   implicit val materializer: Materializer
   implicit val executor: ExecutionContextExecutor
 
-  val failLevel: Logging.LogLevel = if (Config.emsApi.restClient.errorOnFail) Logging.ErrorLevel else Logging.WarningLevel
+  val failLevel: Logging.LogLevel =
+    if (Config.emsApi.restClient.errorOnFail) Logging.ErrorLevel else Logging.WarningLevel
   val connectionFlow: Flow[HttpRequest, HttpResponse, _]
   val serviceName: String
-  lazy val maxRetryCount: Int = 0
+  lazy val maxRetryCount: Int      = 0
   val initialDelay: FiniteDuration = 200.millis
 
   protected def sendRequest(request: HttpRequest): Future[HttpResponse] = {
     Source.single(request).via(connectionFlow).runWith(Sink.head)
   }
 
-  def runRaw[S](request: HttpRequest, retry: Int = maxRetryCount)(implicit um: Unmarshaller[ResponseEntity, S]): Future[S] = {
+  def runRaw[S](request: HttpRequest, retry: Int = maxRetryCount)(
+      implicit um: Unmarshaller[ResponseEntity, S]
+  ): Future[S] = {
     runRawWithHeader(request, Nil, retry)
   }
 
@@ -43,33 +46,50 @@ trait RestClient extends EscherDirectives {
     runStreamWithHeader(request, Nil, retry)
   }
 
-  def runRawWithHeader[S](request: HttpRequest, headers: List[String], retry: Int = maxRetryCount)(implicit um: Unmarshaller[ResponseEntity, S]): Future[S] = {
-    runWithHeaders(request, headers, retry)(entity =>
-      Unmarshal(entity).to[S].recoverWith {
-        case err: DeserializationException =>
-          Unmarshal(entity).to[String].flatMap { body =>
-            Future.failed(InvalidResponseFormatException(err.getMessage, body, err))
-          }
-      }
+  def runRawWithHeader[S](request: HttpRequest, headers: List[String], retry: Int = maxRetryCount)(
+      implicit um: Unmarshaller[ResponseEntity, S]
+  ): Future[S] = {
+    runWithHeaders(request, headers, retry)(
+      entity =>
+        Unmarshal(entity).to[S].recoverWith {
+          case err: DeserializationException =>
+            Unmarshal(entity).to[String].flatMap { body =>
+              Future.failed(InvalidResponseFormatException(err.getMessage, body, err))
+            }
+        }
     )
   }
 
-  def runStreamWithHeader(request: HttpRequest,
-                          headers: List[String],
-                          retry: Int = maxRetryCount): Source[ByteString, NotUsed] = {
-    Source.fromFuture(runWithHeaders(request, headers, retry)(
-      entity => Future.successful(entity.dataBytes.mapMaterializedValue(_ => NotUsed))
-    )).flatMapConcat(identity)
+  def runStreamWithHeader(
+      request: HttpRequest,
+      headers: List[String],
+      retry: Int = maxRetryCount
+  ): Source[ByteString, NotUsed] = {
+    Source
+      .fromFuture(
+        runWithHeaders(request, headers, retry)(
+          entity => Future.successful(entity.dataBytes.mapMaterializedValue(_ => NotUsed))
+        )
+      )
+      .flatMapConcat(identity)
   }
 
-  def runWithHeaders[S, D](request: HttpRequest, headers: List[String], retry: Int = maxRetryCount)(transformer: ResponseEntity => Future[S]): Future[S] = {
+  def runWithHeaders[S, D](request: HttpRequest, headers: List[String], retry: Int = maxRetryCount)(
+      transformer: ResponseEntity => Future[S]
+  ): Future[S] = {
     runE[S](request, headers, retry)(transformer).map(withHeaderErrorHandling[S](request))
   }
 
-  def runE[S](request: HttpRequest, headers: List[String], retry: Int = maxRetryCount)(transformer: ResponseEntity => Future[S]): Future[Either[(Int, String), S]] =
+  def runE[S](request: HttpRequest, headers: List[String], retry: Int = maxRetryCount)(
+      transformer: ResponseEntity => Future[S]
+  ): Future[Either[(Int, String), S]] =
     runEWithServiceName(Some(this.serviceName))(request, headers, retry)(transformer)
 
-  def runEWithServiceName[S](serviceName: Option[String])(request: HttpRequest, headers: List[String], retry: Int = maxRetryCount)(transformer: ResponseEntity => Future[S]): Future[Either[(Int, String), S]] = {
+  def runEWithServiceName[S](serviceName: Option[String])(
+      request: HttpRequest,
+      headers: List[String],
+      retry: Int = maxRetryCount
+  )(transformer: ResponseEntity => Future[S]): Future[Either[(Int, String), S]] = {
     def shouldRetry(error: Either[Throwable, HttpResponse]) = {
       error match {
         case Left(_: BufferOverflowException) => false
@@ -91,19 +111,19 @@ trait RestClient extends EscherDirectives {
     val headersToSign = headers.map(RawHeader(_, ""))
 
     for {
-      signed <- createRequest(serviceName, request, headersToSign)
+      signed   <- createRequest(serviceName, request, headersToSign)
       response <- sendRequestWithRetry(signed, retry)(shouldRetry)(errorStatusMap)
       result <- response match {
-        case Left(value) => Future.successful(Left(value))
+        case Left(value)  => Future.successful(Left(value))
         case Right(value) => transformer(value.entity).map(Right(_))
       }
     } yield result
   }
 
   private def sendRequestWithRetry[S](request: HttpRequest, maxRetries: Int)(
-    shouldRetry: Either[Throwable, HttpResponse] => Boolean
+      shouldRetry: Either[Throwable, HttpResponse] => Boolean
   )(
-    errorStatusMap: Throwable => (Int, String)
+      errorStatusMap: Throwable => (Int, String)
   ): Future[Either[(Int, String), HttpResponse]] = {
     def handleResponse(retriesLeft: Int)(response: HttpResponse): Future[Either[(Int, String), HttpResponse]] = {
       if (response.status.isSuccess()) Future.successful(Right(response))
@@ -126,7 +146,7 @@ trait RestClient extends EscherDirectives {
 
     def doRetry(request: HttpRequest, cause: String, retriesLeft: Int): Future[Either[(Int, String), HttpResponse]] = {
       logRetry(request, retriesLeft, cause)
-      val n     = maxRetries - retriesLeft
+      val n                     = maxRetries - retriesLeft
       val delay: FiniteDuration = initialDelay * (1 << n) // Math.pow(2, n)
       after(delay, system.scheduler)(loop(retriesLeft))
     }
@@ -171,7 +191,7 @@ trait RestClient extends EscherDirectives {
 
   implicit class RichUri(uri: Uri) {
     def +(pathSuffix: String): Uri = {
-      val pathSuffixWithSlash = if(pathSuffix.startsWith("/")) {
+      val pathSuffixWithSlash = if (pathSuffix.startsWith("/")) {
         pathSuffix
       } else {
         "/" + pathSuffix

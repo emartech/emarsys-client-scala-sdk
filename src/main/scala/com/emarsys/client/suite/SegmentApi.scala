@@ -25,11 +25,12 @@ trait SegmentApi extends SuiteClient {
 
 object SegmentApi {
   final case class CreateRequest(
-    name              : String,
-    contactCriteria   : Option[ContactCriteria],
-    behaviorCriteria  : Option[BehaviorCriteria],
-    description       : String,
-    baseContactListId : Option[Int])
+      name: String,
+      contactCriteria: Option[ContactCriteria],
+      behaviorCriteria: Option[BehaviorCriteria],
+      description: String,
+      baseContactListId: Option[Int]
+  )
 
   sealed trait ContactCriteria
   final case class ContactCriteriaBranch(`type`: String, children: List[ContactCriteria]) extends ContactCriteria
@@ -39,18 +40,18 @@ object SegmentApi {
   sealed trait BehaviorCriteria
   final case class BehaviorCriteriaBranch(`type`: String, children: List[BehaviorCriteria]) extends BehaviorCriteria
   final case class BehaviorCriteriaLeaf(
-    `type`           : String,
-    criteria         : Option[String]       = None,
-    time_restriction : Option[String]       = None,
-    from_day         : Option[String]       = None,
-    to_day           : Option[String]       = None,
-    from_date        : Option[String]       = None,
-    to_date          : Option[String]       = None,
-    campaign_filter  : Option[String]       = None,
-    campaign_ids     : Option[List[Int]]    = None,
-    category_ids     : Option[List[Int]]    = None,
-    platform_types   : Option[List[String]] = None,
-    mobile_platforms : Option[List[String]] = None
+      `type`: String,
+      criteria: Option[String] = None,
+      time_restriction: Option[String] = None,
+      from_day: Option[String] = None,
+      to_day: Option[String] = None,
+      from_date: Option[String] = None,
+      to_date: Option[String] = None,
+      campaign_filter: Option[String] = None,
+      campaign_ids: Option[List[Int]] = None,
+      category_ids: Option[List[Int]] = None,
+      platform_types: Option[List[String]] = None,
+      mobile_platforms: Option[List[String]] = None
   ) extends BehaviorCriteria
 
   final case class CreateRawResponseData(id: String)
@@ -60,15 +61,16 @@ object SegmentApi {
     r => CreateResponse(r.data.id.toInt)
 
   def apply(eConfig: EscherConfig)(
-    implicit
-    sys: ActorSystem,
-    mat: Materializer,
-    ex: ExecutionContextExecutor): SegmentApi = {
+      implicit
+      sys: ActorSystem,
+      mat: Materializer,
+      ex: ExecutionContextExecutor
+  ): SegmentApi = {
 
     new SuiteClient with SegmentApi {
-      override implicit val system       = sys
-      override implicit val materializer = mat
-      override implicit val executor     = ex
+      implicit override val system       = sys
+      implicit override val materializer = mat
+      implicit override val executor     = ex
       override val escherConfig          = eConfig
     }
   }

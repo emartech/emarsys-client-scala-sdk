@@ -37,7 +37,8 @@ class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with 
                                  |        }
                                  |    }
                                  |}""".stripMargin
-  val validResponse          = """{
+  val validResponse =
+    """{
                                |    "cohort": "AAAA",
                                |    "features": {},
                                |    "products": {
@@ -149,7 +150,8 @@ class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with 
               "http://demandware.edgesuite.net/aatt_prd/on/demandware.static/-/Sites-Bossini_Catalog/default/dw8923eeb4/images/Products/FW14-520087030/FW14-520087030_01_normal_49.jpg",
               "Big Sale>Ladies>Up to 80% off|Ladies>Categories>T-Shirts (Long Sleeves)",
               Some(130.0f),
-              40.0f),
+              40.0f
+            ),
             Recommendation(
               "FW15-720318090",
               "Long Sleeve Print Fleece Tunic Sweatshirt",
@@ -157,7 +159,8 @@ class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with 
               "http://demandware.edgesuite.net/aatt_prd/on/demandware.static/-/Sites-Bossini_Catalog/default/dw8923eeb4/images/Products/FW15-720318090/FW15-720318090_01_normal_97.jpg",
               "Big Sale>Ladies>Up to 80% off|Ladies>Categories>Sweatshirts",
               Some(280.0f),
-              120.0f)
+              120.0f
+            )
           )
         }
       }
@@ -172,7 +175,8 @@ class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with 
               "http://demandware.edgesuite.net/aatt_prd/on/demandware.static/-/Sites-Bossini_Catalog/default/dw8923eeb4/images/Products/FW14-520087030/FW14-520087030_01_normal_49.jpg",
               "Big Sale>Ladies>Up to 80% off|Ladies>Categories>T-Shirts (Long Sleeves)",
               Some(130.0f),
-              40.0f),
+              40.0f
+            ),
             Recommendation(
               "FW15-720318090",
               "Long Sleeve Print Fleece Tunic Sweatshirt",
@@ -180,7 +184,8 @@ class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with 
               "http://demandware.edgesuite.net/aatt_prd/on/demandware.static/-/Sites-Bossini_Catalog/default/dw8923eeb4/images/Products/FW15-720318090/FW15-720318090_01_normal_97.jpg",
               "Big Sale>Ladies>Up to 80% off|Ladies>Categories>Sweatshirts",
               Some(280.0f),
-              120.0f)
+              120.0f
+            )
           )
         }
       }
@@ -190,25 +195,29 @@ class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with 
 
       "return product object if item found" in {
         loadProduct("validProduct", "[itemId]") map { response =>
-          response.get shouldEqual Recommendation("2129",
-                                                  "LSL Women Hat 60s Hat",
-                                                  "http://lifestylelabels.com/lsl-women-hat-60s-hat.html",
-                                                  "http://lifestylelabels.com/pub/media/catalog/product/w/h/wh001.jpg",
-                                                  "WOMEN>Accessories",
-                                                  Some(55.0f),
-                                                  55.0f)
+          response.get shouldEqual Recommendation(
+            "2129",
+            "LSL Women Hat 60s Hat",
+            "http://lifestylelabels.com/lsl-women-hat-60s-hat.html",
+            "http://lifestylelabels.com/pub/media/catalog/product/w/h/wh001.jpg",
+            "WOMEN>Accessories",
+            Some(55.0f),
+            55.0f
+          )
         }
       }
 
       "return product object even if msrp is missing" in {
         loadProduct("validProductWithNoMsrp", "[itemId]") map { response =>
-          response.get shouldEqual Recommendation("2129",
-                                                  "LSL Women Hat 60s Hat",
-                                                  "http://lifestylelabels.com/lsl-women-hat-60s-hat.html",
-                                                  "http://lifestylelabels.com/pub/media/catalog/product/w/h/wh001.jpg",
-                                                  "WOMEN>Accessories",
-                                                  None,
-                                                  55.0f)
+          response.get shouldEqual Recommendation(
+            "2129",
+            "LSL Women Hat 60s Hat",
+            "http://lifestylelabels.com/lsl-women-hat-60s-hat.html",
+            "http://lifestylelabels.com/pub/media/catalog/product/w/h/wh001.jpg",
+            "WOMEN>Accessories",
+            None,
+            55.0f
+          )
         }
       }
 
@@ -227,7 +236,7 @@ class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with 
       HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, validResponse))
 
     case HttpRequest(HttpMethods.GET, uri, _, _, _)
-      if validRecommendationUriFromAuth(uri) && validPath(uri)("merchants/validResponse/") =>
+        if validRecommendationUriFromAuth(uri) && validPath(uri)("merchants/validResponse/") =>
       HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, validResponse))
 
     case HttpRequest(HttpMethods.GET, uri, _, _, _)
@@ -235,7 +244,7 @@ class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with 
       HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, invalidProductResponse))
 
     case HttpRequest(HttpMethods.GET, uri, _, _, _)
-      if validRecommendationUriFromAuth(uri) && validPath(uri)("merchants/invalidProductResponse/") =>
+        if validRecommendationUriFromAuth(uri) && validPath(uri)("merchants/invalidProductResponse/") =>
       HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, invalidProductResponse))
 
     case HttpRequest(HttpMethods.GET, uri, _, _, _)
@@ -286,8 +295,8 @@ class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with 
   val validRecommendationUriFromAuth = (u: Uri) => {
     u.rawQueryString.fold(false) { p =>
       (p startsWith "f=f:MAIL_PERSONAL,l:3,o:0") &&
-        p.contains(s"&ci=${URLEncoder.encode(auth, "UTF-8")}") &&
-        p.contains(s"&test=true")
+      p.contains(s"&ci=${URLEncoder.encode(auth, "UTF-8")}") &&
+      p.contains(s"&test=true")
     } && validHost(u)
   }
 

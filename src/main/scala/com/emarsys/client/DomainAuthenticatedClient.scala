@@ -12,7 +12,9 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 
 trait DomainAuthenticatedClient extends RestClient {
 
-  def sendRequest[S](request: HttpRequest)(transformer: ResponseEntity => Future[S]): Future[Either[(Int, String), S]] = {
+  def sendRequest[S](
+      request: HttpRequest
+  )(transformer: ResponseEntity => Future[S]): Future[Either[(Int, String), S]] = {
     runEWithServiceName(resolveServiceName(request.uri))(request, Nil, 3)(transformer)
   }
 
@@ -35,15 +37,17 @@ trait DomainAuthenticatedClient extends RestClient {
 }
 
 object DomainAuthenticatedClient {
-  def apply(eConfig: EscherConfig)(implicit
-                                   sys: ActorSystem,
-                                   mat: Materializer,
-                                   ex: ExecutionContextExecutor): DomainAuthenticatedClient = {
+  def apply(eConfig: EscherConfig)(
+      implicit
+      sys: ActorSystem,
+      mat: Materializer,
+      ex: ExecutionContextExecutor
+  ): DomainAuthenticatedClient = {
 
     new DomainAuthenticatedClient {
-      override implicit val system: ActorSystem                = sys
-      override implicit val materializer: Materializer         = mat
-      override implicit val executor: ExecutionContextExecutor = ex
+      implicit override val system: ActorSystem                = sys
+      implicit override val materializer: Materializer         = mat
+      implicit override val executor: ExecutionContextExecutor = ex
       override val escherConfig: EscherConfig                  = eConfig
       override val serviceName: String                         = ""
 

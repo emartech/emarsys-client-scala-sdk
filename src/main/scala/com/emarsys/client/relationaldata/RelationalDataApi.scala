@@ -20,11 +20,9 @@ import scala.concurrent.ExecutionContextExecutor
 trait RelationalDataApi extends RestClient {
 
   val serviceName = relationalData.serviceName
-  val baseUrl = Uri(scheme = s"${relationalData.protocol}",
-                    authority = Authority(host = Host(relationalData.host))) + relationalData.basePath
+  val baseUrl     = Uri(scheme = s"${relationalData.protocol}", authority = Authority(host = Host(relationalData.host))) + relationalData.basePath
 
   final val customerIdHeader = "x-suite-customerid"
-
 
   lazy val connectionFlow: Flow[HttpRequest, HttpResponse, _] = {
     if (relationalData.port == 443) {
@@ -48,15 +46,17 @@ trait RelationalDataApi extends RestClient {
 
 object RelationalDataApi {
 
-  def apply(eConfig: EscherConfig)(implicit
-                                   sys: ActorSystem,
-                                   mat: Materializer,
-                                   ex: ExecutionContextExecutor): RelationalDataApi = {
+  def apply(eConfig: EscherConfig)(
+      implicit
+      sys: ActorSystem,
+      mat: Materializer,
+      ex: ExecutionContextExecutor
+  ): RelationalDataApi = {
 
     new RelationalDataApi {
-      override implicit val system       = sys
-      override implicit val materializer = mat
-      override implicit val executor     = ex
+      implicit override val system       = sys
+      implicit override val materializer = mat
+      implicit override val executor     = ex
       override val escherConfig          = eConfig
     }
   }

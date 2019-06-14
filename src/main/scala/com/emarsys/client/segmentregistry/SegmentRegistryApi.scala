@@ -52,40 +52,48 @@ trait SegmentRegistryApi extends RestClient {
 
 object SegmentRegistryApi {
 
-  case class SegmentData(id: Int,
-                         name: String,
-                         segmentType: String,
-                         criteriaTypes: Option[Seq[String]] = None,
-                         baseContactListId: Option[Int] = None,
-                         predefined: Option[Boolean] = None,
-                         predefinedSegmentId: Option[String] = None)
-  case class SegmentCreatePayload(id: Option[Int],
-                                  name: String,
-                                  segmentType: String,
-                                  criteriaTypes: Option[Seq[String]] = None,
-                                  baseContactListId: Option[Int] = None,
-                                  predefined: Option[Boolean] = None,
-                                  predefinedSegmentId: Option[String] = None)
+  case class SegmentData(
+      id: Int,
+      name: String,
+      segmentType: String,
+      criteriaTypes: Option[Seq[String]] = None,
+      baseContactListId: Option[Int] = None,
+      predefined: Option[Boolean] = None,
+      predefinedSegmentId: Option[String] = None
+  )
+  case class SegmentCreatePayload(
+      id: Option[Int],
+      name: String,
+      segmentType: String,
+      criteriaTypes: Option[Seq[String]] = None,
+      baseContactListId: Option[Int] = None,
+      predefined: Option[Boolean] = None,
+      predefinedSegmentId: Option[String] = None
+  )
 
-  case class SegmentRegistryRecord(id: Int,
-                                   originalId: Int,
-                                   customerId: Int,
-                                   segmentType: String,
-                                   name: String,
-                                   created: DateTime,
-                                   updated: DateTime,
-                                   criteriaTypes: Seq[String],
-                                   baseContactListId: Int,
-                                   predefined: Boolean)
+  case class SegmentRegistryRecord(
+      id: Int,
+      originalId: Int,
+      customerId: Int,
+      segmentType: String,
+      name: String,
+      created: DateTime,
+      updated: DateTime,
+      criteriaTypes: Seq[String],
+      baseContactListId: Int,
+      predefined: Boolean
+  )
 
-  def apply(eConfig: EscherConfig)(implicit
-                                   sys: ActorSystem,
-                                   mat: Materializer,
-                                   ex: ExecutionContextExecutor): SegmentRegistryApi =
+  def apply(eConfig: EscherConfig)(
+      implicit
+      sys: ActorSystem,
+      mat: Materializer,
+      ex: ExecutionContextExecutor
+  ): SegmentRegistryApi =
     new RestClient with SegmentRegistryApi {
-      override implicit val system: ActorSystem                = sys
-      override implicit val materializer: Materializer         = mat
-      override implicit val executor: ExecutionContextExecutor = ex
+      implicit override val system: ActorSystem                = sys
+      implicit override val materializer: Materializer         = mat
+      implicit override val executor: ExecutionContextExecutor = ex
       override val escherConfig: EscherConfig                  = eConfig
     }
 }

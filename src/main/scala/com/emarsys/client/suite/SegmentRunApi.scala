@@ -50,15 +50,17 @@ object SegmentRunApi {
   final case class SegmentRunResult(runId: String, status: String, result: Option[ContactListDetails])
   final case class ContactListDetails(contactListId: Int, userCount: Int, optInCount: Int, duration: Int)
 
-  def apply(eConfig: EscherConfig)(implicit
-                                   sys: ActorSystem,
-                                   mat: Materializer,
-                                   ex: ExecutionContextExecutor): SegmentRunApi = {
+  def apply(eConfig: EscherConfig)(
+      implicit
+      sys: ActorSystem,
+      mat: Materializer,
+      ex: ExecutionContextExecutor
+  ): SegmentRunApi = {
 
     new SuiteClient with SegmentRunApi {
-      override implicit val system       = sys
-      override implicit val materializer = mat
-      override implicit val executor     = ex
+      implicit override val system       = sys
+      implicit override val materializer = mat
+      implicit override val executor     = ex
       override val escherConfig          = eConfig
     }
   }

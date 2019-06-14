@@ -14,7 +14,6 @@ trait SuiteClient extends RestClient {
 
   import SuiteClient._
 
-
   val serviceName = suite.serviceName
   override lazy val connectionFlow: Flow[HttpRequest, HttpResponse, _] =
     if (suite.protocol == "https") Http().outgoingConnectionHttps(suite.host, suite.port)
@@ -25,7 +24,9 @@ trait SuiteClient extends RestClient {
   def baseUrl(customerId: Int) =
     s"${suite.protocol}://${suite.host}${suite.apiPath}/$customerId/"
 
-  def run[S](request: HttpRequest)(implicit um: Unmarshaller[ResponseEntity, SuiteRawResponse[S]]): Future[SuiteRawResponse[S]] =
+  def run[S](
+      request: HttpRequest
+  )(implicit um: Unmarshaller[ResponseEntity, SuiteRawResponse[S]]): Future[SuiteRawResponse[S]] =
     runRaw[SuiteRawResponse[S]](request)
 }
 

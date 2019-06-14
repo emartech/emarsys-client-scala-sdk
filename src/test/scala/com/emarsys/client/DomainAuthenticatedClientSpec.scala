@@ -30,7 +30,7 @@ class DomainAuthenticatedClientSpec extends WordSpecLike with Matchers {
       Await.result(sendRequest(HttpRequest(uri = uri))(Future.successful), 3.seconds)
 
     def getXEmsAuthHeader(request: HttpRequest) =
-      request.headers find (_.name()  == "X-Ems-Auth") map (_.value())
+      request.headers find (_.name() == "X-Ems-Auth") map (_.value())
   }
 
   private def createConnectionFlow(assert: HttpRequest => Assertion): Flow[HttpRequest, HttpResponse, _] =
@@ -67,7 +67,7 @@ class DomainAuthenticatedClientSpec extends WordSpecLike with Matchers {
     "trusted service found in config by the secondary domain" should {
       "sign the request with service1 credentials" in new Scope {
         override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = createConnectionFlow { request =>
-          getXEmsAuthHeader(request).getOrElse("") should include (service1EscherKey)
+          getXEmsAuthHeader(request).getOrElse("") should include(service1EscherKey)
         }
 
         private val serviceUri = Uri("https://service1-alias.com/any/path")

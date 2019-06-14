@@ -25,20 +25,22 @@ class RelationalDataApiSpec extends AsyncWordSpec with Matchers {
 
   object TestRelationalDataApi {
 
-
     def apply(eConfig: EscherConfig)(
-      implicit
-      sys: ActorSystem,
-      mat: Materializer,
-      ex: ExecutionContextExecutor): RelationalDataApi = {
+        implicit
+        sys: ActorSystem,
+        mat: Materializer,
+        ex: ExecutionContextExecutor
+    ): RelationalDataApi = {
 
       new RelationalDataApi {
-        override implicit val system       = sys
-        override implicit val materializer = mat
-        override implicit val executor     = ex
+        implicit override val system       = sys
+        implicit override val materializer = mat
+        implicit override val executor     = ex
         override val escherConfig          = eConfig
 
-        override def runRawWithHeader[S](request: HttpRequest, headers: List[String], retry: Int)(implicit um: Unmarshaller[ResponseEntity, S]): Future[S] = {
+        override def runRawWithHeader[S](request: HttpRequest, headers: List[String], retry: Int)(
+            implicit um: Unmarshaller[ResponseEntity, S]
+        ): Future[S] = {
           calledRequest = Some(request)
           super.runRawWithHeader(request, headers, retry)
         }
@@ -51,7 +53,7 @@ class RelationalDataApiSpec extends AsyncWordSpec with Matchers {
   "RelationalDataApi " should {
 
     "send valid request to proper Uri" in {
-      TestRelationalDataApi(escherConfig).insertIgnore(1,"animal", List.empty)
+      TestRelationalDataApi(escherConfig).insertIgnore(1, "animal", List.empty)
       calledRequest.get.uri.toString() should endWith("/tables/animal/records")
       calledRequest.get.getHeader("x-suite-customerid") should equal(Optional.of(RawHeader("x-suite-customerid", "1")))
     }
@@ -60,13 +62,13 @@ class RelationalDataApiSpec extends AsyncWordSpec with Matchers {
 
       val payload = Seq(
         Map(
-          "cica" -> JsString("cirmos"),
+          "cica"  -> JsString("cirmos"),
           "kutya" -> JsString("aaaa")
         )
       )
       val expectedPayload = """[{"cica":"cirmos","kutya":"aaaa"}])"""
 
-      TestRelationalDataApi(escherConfig).insertIgnore(1,"animal", payload)
+      TestRelationalDataApi(escherConfig).insertIgnore(1, "animal", payload)
 
       calledRequest.get.entity.toString should endWith(expectedPayload)
     }

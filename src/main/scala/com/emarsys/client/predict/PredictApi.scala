@@ -24,15 +24,15 @@ trait PredictApi extends RestClient {
 
   def recommendations(merchantId: String, predictIdentity: Option[PredictIdentity]): Future[List[Recommendation]] = {
     predictIdentity match {
-      case Some(PredictIdentityHash(predictUserId, predictSecret)) => recommendations(merchantId, predictUserId, predictSecret)
+      case Some(PredictIdentityHash(predictUserId, predictSecret)) =>
+        recommendations(merchantId, predictUserId, predictSecret)
       case Some(PredictIdentityAuth(predictAuth)) => recommendations(merchantId, predictAuth)
-      case _ =>  Future.successful(List())
+      case _                                      => Future.successful(List())
     }
   }
 
-
-  val serviceName = predict.serviceName
-  val baseUrl     = s"${predict.protocol}://${predict.host}:${predict.port}"
+  val serviceName                                             = predict.serviceName
+  val baseUrl                                                 = s"${predict.protocol}://${predict.host}:${predict.port}"
   lazy val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Http().outgoingConnectionHttps(predict.host)
 
   override def signRequest(serviceName: String)(implicit ec: ExecutionContext, mat: Materializer) =
@@ -88,17 +88,26 @@ object PredictApi {
   final case class PredictIdentityHash(predictUserId: String, predictSecret: String) extends PredictIdentity
   final case class PredictIdentityAuth(predictAuth: String)                          extends PredictIdentity
 
-  final case class Recommendation(item: String, title: String, link: String, image: String, category: String, msrp: Option[Float], price: Float)
+  final case class Recommendation(
+      item: String,
+      title: String,
+      link: String,
+      image: String,
+      category: String,
+      msrp: Option[Float],
+      price: Float
+  )
 
   def apply(eConfig: EscherConfig)(
-    implicit
-    sys: ActorSystem,
-    mat: Materializer,
-    ex: ExecutionContextExecutor): PredictApi =
+      implicit
+      sys: ActorSystem,
+      mat: Materializer,
+      ex: ExecutionContextExecutor
+  ): PredictApi =
     new RestClient with PredictApi {
-      override implicit val system: ActorSystem                = sys
-      override implicit val materializer: Materializer         = mat
-      override implicit val executor: ExecutionContextExecutor = ex
+      implicit override val system: ActorSystem                = sys
+      implicit override val materializer: Materializer         = mat
+      implicit override val executor: ExecutionContextExecutor = ex
       override val escherConfig: EscherConfig                  = eConfig
     }
 }
