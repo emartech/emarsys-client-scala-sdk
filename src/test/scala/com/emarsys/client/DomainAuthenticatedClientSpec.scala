@@ -1,4 +1,5 @@
 package com.emarsys.client
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
 import akka.stream.ActorMaterializer
@@ -7,7 +8,7 @@ import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory
 import org.scalatest.{Assertion, Matchers, WordSpecLike}
 
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Await
 import scala.concurrent.duration._
 
 class DomainAuthenticatedClientSpec extends WordSpecLike with Matchers {
@@ -27,7 +28,7 @@ class DomainAuthenticatedClientSpec extends WordSpecLike with Matchers {
     val service1EscherKey = "service1-key"
 
     def callSendRequest(uri: Uri) =
-      Await.result(sendRequest(HttpRequest(uri = uri))(Future.successful), 3.seconds)
+      Await.result(send(HttpRequest(uri = uri)), 3.seconds)
 
     def getXEmsAuthHeader(request: HttpRequest) =
       request.headers find (_.name() == "X-Ems-Auth") map (_.value())

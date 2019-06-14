@@ -54,15 +54,14 @@ trait RestClient extends EscherDirectives {
   def runRawWithHeader[S](request: HttpRequest, headers: List[String], retry: Int = maxRetryCount)(
       implicit um: Unmarshaller[ResponseEntity, S]
   ): Future[S] = {
-    runWithHeaders(request, headers, retry)(
-      entity =>
-        Unmarshal(entity).to[S].recoverWith {
-          case err: DeserializationException =>
-            Unmarshal(entity).to[String].flatMap { body =>
-              Future.failed(InvalidResponseFormatException(err.getMessage, body, err))
-            }
-        }
-    )
+    runWithHeaders(request, headers, retry).flatMap { response =>
+      consumeResponse[S](response).recoverWith {
+        case err: DeserializationException =>
+          consumeResponse[String](response).flatMap { body =>
+            Future.failed(InvalidResponseFormatException(err.getMessage, body, err))
+          }
+      }
+    }
   }
 
   def runStreamWithHeader(
@@ -71,30 +70,30 @@ trait RestClient extends EscherDirectives {
       retry: Int = maxRetryCount
   ): Source[ByteString, NotUsed] = {
     Source
-      .fromFuture(
-        runWithHeaders(request, headers, retry)(
-          entity => Future.successful(entity.dataBytes.mapMaterializedValue(_ => NotUsed))
-        )
-      )
+      .fromFuture(runWithHeaders(request, headers, retry).map(_.entity.dataBytes))
       .flatMapConcat(identity)
   }
 
-  def runWithHeaders[S, D](request: HttpRequest, headers: List[String], retry: Int = maxRetryCount)(
-      transformer: ResponseEntity => Future[S]
-  ): Future[S] = {
-    runE[S](request, headers, retry)(transformer).map(withHeaderErrorHandling[S](request))
-  }
-
-  def runE[S](request: HttpRequest, headers: List[String], retry: Int = maxRetryCount)(
-      transformer: ResponseEntity => Future[S]
-  ): Future[Either[(Int, String), S]] =
-    runEWithServiceName(Some(this.serviceName))(request, headers, retry)(transformer)
-
-  def runEWithServiceName[S](serviceName: Option[String])(
+  def runWithHeaders[S, D](
       request: HttpRequest,
       headers: List[String],
       retry: Int = maxRetryCount
-  )(transformer: ResponseEntity => Future[S]): Future[Either[(Int, String), S]] = {
+  ): Future[HttpResponse] = {
+    runE(request, headers, retry).map(withHeaderErrorHandling(request))
+  }
+
+  def runE(
+      request: HttpRequest,
+      headers: List[String],
+      retry: Int = maxRetryCount
+  ): Future[Either[(Int, String), HttpResponse]] =
+    runEWithServiceName(Some(this.serviceName))(request, headers, retry)
+
+  def runEWithServiceName(serviceName: Option[String])(
+      request: HttpRequest,
+      headers: List[String],
+      retry: Int = maxRetryCount
+  ): Future[Either[(Int, String), HttpResponse]] = {
     def shouldRetry(result: RequestResult) = result match {
       case SuccessfulRequest(_) => false
       case FailureResponse(response) =>
@@ -102,8 +101,8 @@ trait RestClient extends EscherDirectives {
           case ServerError(_) => true
           case _              => false
         }
-      case RequestError(overflow: BufferOverflowException) => false
-      case RequestError(error)                             => true
+      case RequestError(_: BufferOverflowException) => false
+      case RequestError(_)                          => true
     }
 
     def errorStatusMap(error: Throwable) = error match {
@@ -117,11 +116,7 @@ trait RestClient extends EscherDirectives {
     for {
       signed   <- createRequest(serviceName, request, headersToSign)
       response <- sendRequestWithRetry(signed, retry)(shouldRetry)(errorStatusMap)
-      result <- response match {
-        case Right(value) => transformer(value.entity).map(Right(_))
-        case Left(value)  => Future.successful(Left(value))
-      }
-    } yield result
+    } yield response
   }
 
   private def sendRequestWithRetry[S](request: HttpRequest, maxRetries: Int)(
@@ -149,7 +144,7 @@ trait RestClient extends EscherDirectives {
     def handleException(retriesLeft: Int, re: RequestError) = {
       val error = re.error
       if (retriesLeft > 0 && shouldRetry(re)) {
-        doRetry(error.getMessage(), retriesLeft - 1)
+        doRetry(error.getMessage, retriesLeft - 1)
       } else {
         val (status, cause) = errorStatusMap(error)
         failRequest(status, request, cause)

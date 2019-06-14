@@ -1,7 +1,7 @@
 package com.emarsys.client
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse, ResponseEntity, Uri}
+import akka.http.scaladsl.model.{HttpRequest, HttpResponse, Uri}
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
 import com.emarsys.escher.akka.http.config.EscherConfig
@@ -12,10 +12,8 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 
 trait DomainAuthenticatedClient extends RestClient {
 
-  def sendRequest[S](
-      request: HttpRequest
-  )(transformer: ResponseEntity => Future[S]): Future[Either[(Int, String), S]] = {
-    runEWithServiceName(resolveServiceName(request.uri))(request, Nil, 3)(transformer)
+  def send[S](request: HttpRequest): Future[Either[(Int, String), HttpResponse]] = {
+    runEWithServiceName(resolveServiceName(request.uri))(request, Nil, 3)
   }
 
   private def resolveServiceName(uri: Uri): Option[String] =
