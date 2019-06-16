@@ -34,27 +34,29 @@ trait RestClient extends EscherDirectives {
     if (Config.emsApi.restClient.errorOnFail) Logging.ErrorLevel else Logging.WarningLevel
   val connectionFlow: Flow[HttpRequest, HttpResponse, _]
   val serviceName: String
-  lazy val maxRetryCount: Int      = 0
   val initialDelay: FiniteDuration = 200.millis
 
   protected def sendRequest(request: HttpRequest): Future[HttpResponse] = {
     Source.single(request).via(connectionFlow).runWith(Sink.head)
   }
 
-  def runRaw[S](request: HttpRequest, retry: Int = maxRetryCount)(
-      implicit um: Unmarshaller[ResponseEntity, S]
-  ): Future[S] = {
-    runRawWithHeader(request, Nil, retry)
+  def runStreamSigned(
+      request: HttpRequest,
+      serviceName: String,
+      headers: List[String],
+      maxRetries: Int
+  ): Source[ByteString, NotUsed] = {
+    Source
+      .fromFuture(
+        runSigned[ResponseEntity](request, serviceName, headers, maxRetries).map(_.dataBytes)
+      )
+      .flatMapConcat(identity)
   }
 
-  def runStream(request: HttpRequest, retry: Int = maxRetryCount): Source[ByteString, NotUsed] = {
-    runStreamWithHeader(request, Nil, retry)
-  }
-
-  def runRawWithHeader[S](request: HttpRequest, headers: List[String], retry: Int = maxRetryCount)(
+  def runSigned[S](request: HttpRequest, serviceName: String, headers: List[String] = Nil, maxRetries: Int)(
       implicit um: Unmarshaller[ResponseEntity, S]
   ): Future[S] = {
-    runWithHeaders(request, headers, retry).flatMap { response =>
+    runRawSigned(request, serviceName, headers, maxRetries).flatMap { response =>
       consumeResponse[S](response).recoverWith {
         case err: DeserializationException =>
           consumeResponse[String](response).flatMap { body =>
@@ -64,36 +66,46 @@ trait RestClient extends EscherDirectives {
     }
   }
 
-  def runStreamWithHeader(
+  def runRawSigned(
       request: HttpRequest,
+      serviceName: String,
       headers: List[String],
-      retry: Int = maxRetryCount
-  ): Source[ByteString, NotUsed] = {
+      maxRetries: Int
+  ): Future[HttpResponse] = {
+    val headersToSign = headers.map(RawHeader(_, ""))
+
+    for {
+      signed   <- signRequestWithHeaders(headersToSign)(serviceName)(executor, materializer)(request)
+      response <- runRaw(signed, maxRetries)
+    } yield response
+  }
+
+  def runStreamed(request: HttpRequest, maxRetries: Int): Source[ByteString, NotUsed] = {
     Source
-      .fromFuture(runWithHeaders(request, headers, retry).map(_.entity.dataBytes))
+      .fromFuture(
+        runRaw(request, maxRetries).map(_.entity.dataBytes)
+      )
       .flatMapConcat(identity)
   }
 
-  def runWithHeaders[S, D](
-      request: HttpRequest,
-      headers: List[String],
-      retry: Int = maxRetryCount
-  ): Future[HttpResponse] = {
-    runE(request, headers, retry).map(withHeaderErrorHandling(request))
+  def run[S](request: HttpRequest, maxRetries: Int)(
+      implicit um: Unmarshaller[ResponseEntity, S]
+  ): Future[S] = {
+    runRaw(request, maxRetries).flatMap { response =>
+      consumeResponse[S](response).recoverWith {
+        case err: DeserializationException =>
+          consumeResponse[String](response).flatMap { body =>
+            Future.failed(InvalidResponseFormatException(err.getMessage, body, err))
+          }
+      }
+    }
   }
 
-  def runE(
-      request: HttpRequest,
-      headers: List[String],
-      retry: Int = maxRetryCount
-  ): Future[Either[(Int, String), HttpResponse]] =
-    runEWithServiceName(Some(this.serviceName))(request, headers, retry)
+  def runRaw(request: HttpRequest, maxRetries: Int): Future[HttpResponse] = {
+    internalRun(request, maxRetries).map(withHeaderErrorHandling(request))
+  }
 
-  def runEWithServiceName(serviceName: Option[String])(
-      request: HttpRequest,
-      headers: List[String],
-      retry: Int = maxRetryCount
-  ): Future[Either[(Int, String), HttpResponse]] = {
+  private def internalRun(request: HttpRequest, maxRetries: Int): Future[Either[(Int, String), HttpResponse]] = {
     def shouldRetry(result: RequestResult) = result match {
       case SuccessfulRequest(_) => false
       case FailureResponse(response) =>
@@ -111,11 +123,8 @@ trait RestClient extends EscherDirectives {
       case otherException             => throw otherException
     }
 
-    val headersToSign = headers.map(RawHeader(_, ""))
-
     for {
-      signed   <- createRequest(serviceName, request, headersToSign)
-      response <- sendRequestWithRetry(signed, retry)(shouldRetry)(errorStatusMap)
+      response <- sendRequestWithRetry(request, maxRetries)(shouldRetry)(errorStatusMap)
     } yield response
   }
 
@@ -192,12 +201,6 @@ trait RestClient extends EscherDirectives {
 
   private def consumeResponse[S](response: HttpResponse)(implicit um: Unmarshaller[ResponseEntity, S]): Future[S] = {
     Unmarshal(response.entity).to[S]
-  }
-
-  private def createRequest[S](serviceName: Option[String], request: HttpRequest, headersToSign: List[RawHeader]) = {
-    serviceName.fold(Future.successful(request)) { serviceName =>
-      signRequestWithHeaders(headersToSign)(serviceName)(executor, materializer)(request)
-    }
   }
 
   private def withHeaderErrorHandling[S](request: HttpRequest): PartialFunction[Either[(Int, String), S], S] = {

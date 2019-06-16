@@ -24,10 +24,11 @@ trait SuiteClient extends RestClient {
   def baseUrl(customerId: Int) =
     s"${suite.protocol}://${suite.host}${suite.apiPath}/$customerId/"
 
-  def run[S](
-      request: HttpRequest
+  def runSuiteRequest[S](
+      request: HttpRequest,
+      maxRetries: Int
   )(implicit um: Unmarshaller[ResponseEntity, SuiteRawResponse[S]]): Future[SuiteRawResponse[S]] =
-    runRaw[SuiteRawResponse[S]](request)
+    runSigned[SuiteRawResponse[S]](request, serviceName, Nil, maxRetries)
 }
 
 object SuiteClient {

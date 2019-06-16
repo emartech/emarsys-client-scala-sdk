@@ -38,11 +38,11 @@ class RelationalDataApiSpec extends AsyncWordSpec with Matchers {
         implicit override val executor     = ex
         override val escherConfig          = eConfig
 
-        override def runRawWithHeader[S](request: HttpRequest, headers: List[String], retry: Int)(
+        override def runSigned[S](request: HttpRequest, serviceName: String, headers: List[String], maxRetries: Int)(
             implicit um: Unmarshaller[ResponseEntity, S]
         ): Future[S] = {
           calledRequest = Some(request)
-          super.runRawWithHeader(request, headers, retry)
+          super.runSigned(request, serviceName, headers, maxRetries)
         }
       }
 

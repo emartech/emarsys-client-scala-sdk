@@ -14,6 +14,7 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 trait ContactFieldApi extends SuiteClient {
 
   import ContactFieldApi._
+  val maxRetryCount = 0
 
   def list(customerId: Int): Future[ListResponse] = {
     val path = "field"
@@ -36,7 +37,7 @@ trait ContactFieldApi extends SuiteClient {
   private def callList(customerId: Int, path: String) = {
     val request = RequestBuilding.Get(Uri(baseUrl(customerId) + path))
 
-    run[ListRawResponseData](request) map listResponseTransformer
+    runSuiteRequest[ListRawResponseData](request, maxRetryCount) map listResponseTransformer
   }
 
   private def predictFilter(fields: ListResponse) =
@@ -50,7 +51,7 @@ trait ContactFieldApi extends SuiteClient {
 
   def createField(customerId: Int, payload: CreateFieldRequest): Future[CreateFieldResponse] = {
     val request = RequestBuilding.Post(Uri(baseUrl(customerId) + "field"), payload)
-    run[CreateFieldResponse](request) map (_.data)
+    runSuiteRequest[CreateFieldResponse](request, maxRetryCount) map (_.data)
   }
 }
 

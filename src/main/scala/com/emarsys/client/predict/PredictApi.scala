@@ -22,6 +22,8 @@ trait PredictApi extends RestClient {
 
   import PredictApi._
 
+  val maxRetryCount = 0
+
   def recommendations(merchantId: String, predictIdentity: Option[PredictIdentity]): Future[List[Recommendation]] = {
     predictIdentity match {
       case Some(PredictIdentityHash(predictUserId, predictSecret)) =>
@@ -57,14 +59,14 @@ trait PredictApi extends RestClient {
   def sendRequest(path: String, query: String): Future[List[Recommendation]] = {
     val request = RequestBuilding.Get(Uri(baseUrl + path + query))
 
-    runRaw[RecommendationResponse](request) map { response =>
+    runSigned[RecommendationResponse](request, serviceName, Nil, maxRetryCount) map { response =>
       response.products.values.toList.flatMap(parseRecommendation)
     }
   }
 
   def loadProduct(merchantId: String, itemId: String): Future[Option[Recommendation]] = {
     val path = s"/productinfo/merchants/$merchantId/?v=i:$itemId"
-    runRaw[RawProducts](RequestBuilding.Get(Uri(baseUrl + path))) map { response =>
+    runSigned[RawProducts](RequestBuilding.Get(Uri(baseUrl + path)), serviceName, Nil, maxRetryCount) map { response =>
       response.values.toList.headOption.flatMap(parseRecommendation)
     }
   }

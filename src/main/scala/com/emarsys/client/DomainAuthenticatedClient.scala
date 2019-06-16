@@ -12,8 +12,11 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 
 trait DomainAuthenticatedClient extends RestClient {
 
-  def send[S](request: HttpRequest): Future[Either[(Int, String), HttpResponse]] = {
-    runEWithServiceName(resolveServiceName(request.uri))(request, Nil, 3)
+  def send[S](request: HttpRequest): Future[HttpResponse] = {
+    resolveServiceName(request.uri) match {
+      case Some(service) => runRawSigned(request, service, Nil, 3)
+      case None => runRaw(request, 3)
+    }
   }
 
   private def resolveServiceName(uri: Uri): Option[String] =

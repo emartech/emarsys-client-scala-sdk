@@ -19,8 +19,9 @@ import scala.concurrent.ExecutionContextExecutor
 
 trait RelationalDataApi extends RestClient {
 
-  val serviceName = relationalData.serviceName
-  val baseUrl     = Uri(scheme = s"${relationalData.protocol}", authority = Authority(host = Host(relationalData.host))) + relationalData.basePath
+  val serviceName   = relationalData.serviceName
+  val baseUrl       = Uri(scheme = s"${relationalData.protocol}", authority = Authority(host = Host(relationalData.host))) + relationalData.basePath
+  val maxRetryCount = 0
 
   final val customerIdHeader = "x-suite-customerid"
 
@@ -39,7 +40,7 @@ trait RelationalDataApi extends RestClient {
       .Post(baseUrl + path, payload)
       .addHeader(RawHeader(customerIdHeader, customerId.toString))
 
-    runRawWithHeader[String](request, List(customerIdHeader))
+    runSigned[String](request, serviceName, List(customerIdHeader), maxRetryCount)
   }
 
 }

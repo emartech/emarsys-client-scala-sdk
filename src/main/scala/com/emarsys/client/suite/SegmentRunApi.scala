@@ -14,6 +14,7 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 trait SegmentRunApi extends SuiteClient {
 
   import SegmentRunApi._
+  val maxRetryCount = 0
 
   def start(customerId: Int, segmentId: Int, renewCache: Boolean = false): Future[SegmentRunResult] = {
     val path    = s"filter/$segmentId/runs/"
@@ -21,14 +22,14 @@ trait SegmentRunApi extends SuiteClient {
     val uri     = if (renewCache) baseUri.withQuery(Query("renew" -> "true")) else baseUri
     val request = RequestBuilding.Post(uri)
 
-    run[SegmentRunResultRaw](request).map(_.data).map(toInternalFormat)
+    runSuiteRequest[SegmentRunResultRaw](request, maxRetryCount).map(_.data).map(toInternalFormat)
   }
 
   def poll(customerId: Int, segmentId: Int, runId: String): Future[SegmentRunResult] = {
     val path    = s"filter/$segmentId/runs/$runId/"
     val request = RequestBuilding.Get(Uri(baseUrl(customerId) + path))
 
-    run[SegmentRunResultRaw](request).map(_.data).map(toInternalFormat)
+    runSuiteRequest[SegmentRunResultRaw](request, maxRetryCount).map(_.data).map(toInternalFormat)
   }
 
   private def toInternalFormat(segmentRunResult: SegmentRunResultRaw): SegmentRunResult =

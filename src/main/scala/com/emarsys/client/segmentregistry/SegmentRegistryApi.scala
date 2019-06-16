@@ -25,24 +25,42 @@ trait SegmentRegistryApi extends RestClient {
 
   lazy val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Http().outgoingConnectionHttps(segmentRegistry.host)
 
+  val maxRetryCount = 0
+
   def create(customerId: Int, segmentData: SegmentCreatePayload): Future[SegmentRegistryRecord] = {
-    runRaw[SegmentRegistryRecord](RequestBuilding.Post(Uri(baseUrl + path(customerId)), segmentData))
+    runSigned[SegmentRegistryRecord](
+      RequestBuilding.Post(Uri(baseUrl + path(customerId)), segmentData),
+      serviceName,
+      Nil,
+      maxRetryCount
+    )
   }
 
   def update(customerId: Int, segmentData: SegmentData): Future[SegmentRegistryRecord] = {
-    runRaw[SegmentRegistryRecord](
-      RequestBuilding.Put(Uri(baseUrl + path(customerId)), segmentData)
+    runSigned[SegmentRegistryRecord](
+      RequestBuilding.Put(Uri(baseUrl + path(customerId)), segmentData),
+      serviceName,
+      Nil,
+      maxRetryCount
     )
   }
 
   def updateByRegistryId(customerId: Int, segmentData: SegmentData): Future[SegmentRegistryRecord] = {
-    runRaw[SegmentRegistryRecord](
-      RequestBuilding.Put(Uri(baseUrl + path(customerId) + "/" + segmentData.id), segmentData)
+    runSigned[SegmentRegistryRecord](
+      RequestBuilding.Put(Uri(baseUrl + path(customerId) + "/" + segmentData.id), segmentData),
+      serviceName,
+      Nil,
+      maxRetryCount
     )
   }
 
   def delete(customerId: Int, segmentId: Int): Future[Unit] = {
-    runRaw[String](RequestBuilding.Delete(Uri(baseUrl + path(customerId) + "/" + segmentId))).map(_ => ())
+    runSigned[String](
+      RequestBuilding.Delete(Uri(baseUrl + path(customerId) + "/" + segmentId)),
+      serviceName,
+      Nil,
+      maxRetryCount
+    ).map(_ => ())
   }
 
   private def path(customerId: Int) = {
