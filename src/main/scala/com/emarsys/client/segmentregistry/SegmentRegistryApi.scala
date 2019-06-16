@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.client.RequestBuilding
 import akka.stream.Materializer
-import com.emarsys.client.RestClient
+import com.emarsys.client.{EscherRestClient, RestClient}
 import com.emarsys.escher.akka.http.config.EscherConfig
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import com.emarsys.formats.JodaDateTimeFormat._
@@ -15,7 +15,7 @@ import org.joda.time.DateTime
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
-trait SegmentRegistryApi extends RestClient {
+trait SegmentRegistryApi extends EscherRestClient {
 
   import SegmentRegistryApi._
 

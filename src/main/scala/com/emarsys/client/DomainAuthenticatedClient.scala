@@ -10,7 +10,7 @@ import com.typesafe.config.ConfigException
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
-trait DomainAuthenticatedClient extends RestClient {
+trait DomainAuthenticatedClient extends EscherRestClient {
 
   def send[S](request: HttpRequest): Future[HttpResponse] = {
     resolveServiceName(request.uri) match {

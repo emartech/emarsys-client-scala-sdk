@@ -13,12 +13,12 @@ import spray.json._
 import fommil.sjs.FamilyFormats._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import com.emarsys.client.Config.emsApi.predict
-import com.emarsys.client.RestClient
+import com.emarsys.client.{EscherRestClient, RestClient}
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success, Try}
 
-trait PredictApi extends RestClient {
+trait PredictApi extends EscherRestClient {
 
   import PredictApi._
 

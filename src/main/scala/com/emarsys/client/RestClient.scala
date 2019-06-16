@@ -5,26 +5,21 @@ import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
-import akka.pattern.after
-import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.unmarshalling.{Unmarshal, Unmarshaller}
-import akka.stream.{BufferOverflowException, Materializer, StreamTcpException}
+import akka.pattern.after
 import akka.stream.scaladsl.{Flow, Sink, Source}
+import akka.stream.{BufferOverflowException, Materializer, StreamTcpException}
 import akka.util.ByteString
 import com.emarsys.escher.akka.http.EscherDirectives
-
-import scala.concurrent.{ExecutionContextExecutor, Future}
 import spray.json.DeserializationException
 
 import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.control.NonFatal
-import com.emarsys.client.RestClient.SuccessfulRequest
-import com.emarsys.client.RestClient.FailureResponse
-import com.emarsys.client.RestClient.RequestError
 
 trait RestClient extends EscherDirectives {
-  import RestClientErrors._
   import RestClient._
+  import RestClientErrors._
 
   implicit val system: ActorSystem
   implicit val materializer: Materializer
@@ -40,47 +35,7 @@ trait RestClient extends EscherDirectives {
     Source.single(request).via(connectionFlow).runWith(Sink.head)
   }
 
-  def runStreamSigned(
-      request: HttpRequest,
-      serviceName: String,
-      headers: List[String],
-      maxRetries: Int
-  ): Source[ByteString, NotUsed] = {
-    Source
-      .fromFuture(
-        runSigned[ResponseEntity](request, serviceName, headers, maxRetries).map(_.dataBytes)
-      )
-      .flatMapConcat(identity)
-  }
-
-  def runSigned[S](request: HttpRequest, serviceName: String, headers: List[String] = Nil, maxRetries: Int)(
-      implicit um: Unmarshaller[ResponseEntity, S]
-  ): Future[S] = {
-    runRawSigned(request, serviceName, headers, maxRetries).flatMap { response =>
-      consumeResponse[S](response).recoverWith {
-        case err: DeserializationException =>
-          consumeResponse[String](response).flatMap { body =>
-            Future.failed(InvalidResponseFormatException(err.getMessage, body, err))
-          }
-      }
-    }
-  }
-
-  def runRawSigned(
-      request: HttpRequest,
-      serviceName: String,
-      headers: List[String],
-      maxRetries: Int
-  ): Future[HttpResponse] = {
-    val headersToSign = headers.map(RawHeader(_, ""))
-
-    for {
-      signed   <- signRequestWithHeaders(headersToSign)(serviceName)(executor, materializer)(request)
-      response <- runRaw(signed, maxRetries)
-    } yield response
-  }
-
-  def runStreamed(request: HttpRequest, maxRetries: Int): Source[ByteString, NotUsed] = {
+  protected def runStreamed(request: HttpRequest, maxRetries: Int): Source[ByteString, NotUsed] = {
     Source
       .fromFuture(
         runRaw(request, maxRetries).map(_.entity.dataBytes)
@@ -88,7 +43,7 @@ trait RestClient extends EscherDirectives {
       .flatMapConcat(identity)
   }
 
-  def run[S](request: HttpRequest, maxRetries: Int)(
+  protected def run[S](request: HttpRequest, maxRetries: Int)(
       implicit um: Unmarshaller[ResponseEntity, S]
   ): Future[S] = {
     runRaw(request, maxRetries).flatMap { response =>
@@ -101,7 +56,7 @@ trait RestClient extends EscherDirectives {
     }
   }
 
-  def runRaw(request: HttpRequest, maxRetries: Int): Future[HttpResponse] = {
+  protected def runRaw(request: HttpRequest, maxRetries: Int): Future[HttpResponse] = {
     internalRun(request, maxRetries).map(withHeaderErrorHandling(request))
   }
 
@@ -186,6 +141,10 @@ trait RestClient extends EscherDirectives {
     loop(maxRetries)
   }
 
+  protected def consumeResponse[S](response: HttpResponse)(implicit um: Unmarshaller[ResponseEntity, S]): Future[S] = {
+    Unmarshal(response.entity).to[S]
+  }
+
   private def failRequest[S](status: Int, request: HttpRequest, cause: String) = {
     logFailure(status, request, cause)
     Future.successful(Left((status, cause)))
@@ -197,10 +156,6 @@ trait RestClient extends EscherDirectives {
 
   private def logFailure[S](status: Int, request: HttpRequest, msg: String): Unit = {
     system.log.log(failLevel, "Request to {} failed with status: {} / body: {}", request.uri, status, msg)
-  }
-
-  private def consumeResponse[S](response: HttpResponse)(implicit um: Unmarshaller[ResponseEntity, S]): Future[S] = {
-    Unmarshal(response.entity).to[S]
   }
 
   private def withHeaderErrorHandling[S](request: HttpRequest): PartialFunction[Either[(Int, String), S], S] = {

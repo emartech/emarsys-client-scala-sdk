@@ -6,11 +6,11 @@ import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.stream.scaladsl.Flow
 import com.emarsys.client.Config.emsApi.suite
-import com.emarsys.client.RestClient
+import com.emarsys.client.EscherRestClient
 
 import scala.concurrent.Future
 
-trait SuiteClient extends RestClient {
+trait SuiteClient extends EscherRestClient {
 
   import SuiteClient._
 
