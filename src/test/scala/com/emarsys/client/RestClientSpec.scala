@@ -5,6 +5,7 @@ import akka.http.scaladsl.model._
 import akka.stream.{ActorMaterializer, BufferOverflowException, Materializer, StreamTcpException}
 import akka.stream.scaladsl.{Flow, Sink}
 import akka.testkit.TestKit
+import com.emarsys.client
 import com.emarsys.client.Config.RetryConfig
 import com.emarsys.client.RestClientErrors.RestClientException
 import org.scalatest.{Matchers, WordSpecLike}
@@ -29,7 +30,7 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
       RetryConfig(maxRetries = 3, dontRetryAfter = 1.second, initialRetryDelay = 10.millis)
   }
 
-  "#runRawWithHeader" should {
+  "#run" should {
 
     "return ok if everything is ok" in new Scope {
       override val connectionFlow: Flow[HttpRequest, HttpResponse, _] =
@@ -84,6 +85,23 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
         RestClientException(s"Rest client request failed for $url", 500, "{}")
       )
       counter shouldBe 4
+    }
+
+    "not retry if maxRetryCount is set to 0" in new Scope {
+      var counter = 0
+      val counterFn = () => {
+        _: HttpRequest => {
+          counter += 1
+          List(HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
+        }
+      }
+      override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Flow[HttpRequest].statefulMapConcat(counterFn)
+
+      private val retryConfig: client.Config.RetryConfig = defaultRetryConfig.copy(maxRetries = 0)
+      Try(Await.result(run[String](HttpRequest(uri = url), retryConfig), timeout)) shouldBe Failure(
+        RestClientException(s"Rest client request failed for $url", 500, "{}")
+      )
+      counter shouldBe 1
     }
 
     "return 504 if all attempt is failed with stream tcp exception" in new Scope {
@@ -163,12 +181,24 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
     }
   }
 
-  "#runStreamWithHeader" should {
-    "runStreamWithHeader return ok if everything is ok" in new Scope {
+  "#runStreamed" should {
+    "return ok if everything is ok" in new Scope {
       override val connectionFlow: Flow[HttpRequest, HttpResponse, _] =
         Flow[HttpRequest].map(_ => HttpResponse(StatusCodes.OK, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
 
       Await.result(runStreamed(HttpRequest(uri = url)).map(_.utf8String).runWith(Sink.seq), timeout) shouldBe Seq("{}")
+    }
+  }
+
+  "#runRaw" should {
+    "return ok if everything is ok" in new Scope {
+      override val connectionFlow: Flow[HttpRequest, HttpResponse, _] =
+        Flow[HttpRequest].map(_ => HttpResponse(StatusCodes.OK, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
+
+      val result = Await.result(runRaw(HttpRequest(uri = url)), timeout)
+      result.status should ===(StatusCodes.OK)
+      val responseBody = Await.result(result.entity.toStrict(timeout), timeout)
+      responseBody.data.utf8String should ===("{}")
     }
   }
 }
