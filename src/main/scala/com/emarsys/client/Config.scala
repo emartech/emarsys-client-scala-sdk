@@ -1,5 +1,7 @@
 package com.emarsys.client
 
+import scala.concurrent.duration.FiniteDuration
+
 trait Config {
 
   import pureconfig.{loadConfigOrThrow, CamelCase, ConfigFieldMapping, ProductHint}
@@ -10,10 +12,12 @@ trait Config {
       suite: SuiteConfig,
       segmentRegistry: SegmentRegistryConfig,
       predict: PredictConfig,
-      clientRetryCount: Int,
+      retry: RetryConfig,
       relationalData: RelationalDataConfig,
       restClient: RestClientConfig
   )
+
+  case class RetryConfig(maxRetries: Int, dontRetryAfter: FiniteDuration, initialRetryDelay: FiniteDuration)
 
   case class SuiteConfig(
       protocol: String = "https",

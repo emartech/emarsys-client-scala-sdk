@@ -7,6 +7,7 @@ import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.stream.scaladsl.Flow
 import com.emarsys.client.Config.emsApi.suite
 import com.emarsys.client.EscherRestClient
+import com.emarsys.client.Config.RetryConfig
 
 import scala.concurrent.Future
 
@@ -26,9 +27,9 @@ trait SuiteClient extends EscherRestClient {
 
   def runSuiteRequest[S](
       request: HttpRequest,
-      maxRetries: Int
+      retryConfig: RetryConfig
   )(implicit um: Unmarshaller[ResponseEntity, SuiteRawResponse[S]]): Future[SuiteRawResponse[S]] =
-    runSigned[SuiteRawResponse[S]](request, serviceName, Nil, maxRetries)
+    runSigned[SuiteRawResponse[S]](request, serviceName, Nil, retryConfig)
 }
 
 object SuiteClient {

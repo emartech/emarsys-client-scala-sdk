@@ -17,7 +17,8 @@ trait EventApi extends SuiteClient {
 
   import EventApi._
 
-  val maxRetryCount = 0
+  val retryConfig = defaultRetryConfig.copy(maxRetries = 0)
+
 
   implicit val formatForMap     = jsonFormat3(SuiteRawResponse[Map[String, String]])
   implicit val formatForJsValue = jsonFormat3(SuiteRawResponse[JsValue])
@@ -26,14 +27,14 @@ trait EventApi extends SuiteClient {
     val path    = s"event/$eventId/trigger"
     val request = RequestBuilding.Post(Uri(baseUrl(customerId) + path), entity.toJsonWithPureSpray)
 
-    runSuiteRequest[Map[String, String]](request, maxRetryCount).map(_ => ())
+    runSuiteRequest[Map[String, String]](request, retryConfig).map(_ => ())
   }
 
   def triggerBatch(customerId: Int, eventId: String, entity: ExternalEventTriggerBatch): Future[List[TriggerError]] = {
     val path    = s"event/$eventId/trigger"
     val request = RequestBuilding.Post(Uri(baseUrl(customerId) + path), entity.toJsonWithPureSpray)
 
-    runSuiteRequest[JsValue](request, maxRetryCount).map(_.data match {
+    runSuiteRequest[JsValue](request, retryConfig).map(_.data match {
       case data: JsObject => parseBatchTriggerResponseData(data)
       case _              => List.empty[TriggerError]
     })

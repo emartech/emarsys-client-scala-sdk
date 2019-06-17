@@ -10,6 +10,7 @@ import akka.pattern.after
 import akka.stream.scaladsl.{Flow, Sink, Source}
 import akka.stream.{BufferOverflowException, Materializer, StreamTcpException}
 import akka.util.ByteString
+import com.emarsys.client.Config.RetryConfig
 import com.emarsys.escher.akka.http.EscherDirectives
 import spray.json.DeserializationException
 
@@ -29,24 +30,27 @@ trait RestClient extends EscherDirectives {
     if (Config.emsApi.restClient.errorOnFail) Logging.ErrorLevel else Logging.WarningLevel
   val connectionFlow: Flow[HttpRequest, HttpResponse, _]
   val serviceName: String
-  val initialDelay: FiniteDuration = 200.millis
+  val defaultRetryConfig: RetryConfig = Config.emsApi.retry
 
   protected def sendRequest(request: HttpRequest): Future[HttpResponse] = {
     Source.single(request).via(connectionFlow).runWith(Sink.head)
   }
 
-  protected def runStreamed(request: HttpRequest, maxRetries: Int): Source[ByteString, NotUsed] = {
+  protected def runStreamed(
+      request: HttpRequest,
+      retryConfig: RetryConfig = defaultRetryConfig
+  ): Source[ByteString, NotUsed] = {
     Source
       .fromFuture(
-        runRaw(request, maxRetries).map(_.entity.dataBytes)
+        runRaw(request, retryConfig).map(_.entity.dataBytes)
       )
       .flatMapConcat(identity)
   }
 
-  protected def run[S](request: HttpRequest, maxRetries: Int)(
+  protected def run[S](request: HttpRequest, retryConfig: RetryConfig = defaultRetryConfig)(
       implicit um: Unmarshaller[ResponseEntity, S]
   ): Future[S] = {
-    runRaw(request, maxRetries).flatMap { response =>
+    runRaw(request, retryConfig).flatMap { response =>
       consumeResponse[S](response).recoverWith {
         case err: DeserializationException =>
           consumeResponse[String](response).flatMap { body =>
@@ -56,11 +60,14 @@ trait RestClient extends EscherDirectives {
     }
   }
 
-  protected def runRaw(request: HttpRequest, maxRetries: Int): Future[HttpResponse] = {
-    internalRun(request, maxRetries).map(withHeaderErrorHandling(request))
+  protected def runRaw(request: HttpRequest, retryConfig: RetryConfig = defaultRetryConfig): Future[HttpResponse] = {
+    internalRun(request, retryConfig).map(withHeaderErrorHandling(request))
   }
 
-  private def internalRun(request: HttpRequest, maxRetries: Int): Future[Either[(Int, String), HttpResponse]] = {
+  private def internalRun(
+      request: HttpRequest,
+      retryConfig: RetryConfig
+  ): Future[Either[InternalClientError, HttpResponse]] = {
     def shouldRetry(result: RequestResult) = result match {
       case SuccessfulRequest(_) => false
       case FailureResponse(response) =>
@@ -68,8 +75,8 @@ trait RestClient extends EscherDirectives {
           case ServerError(_) => true
           case _              => false
         }
-      case RequestError(_: BufferOverflowException) => false
-      case RequestError(_)                          => true
+      case RequestException(_: BufferOverflowException) => false
+      case RequestException(_)                          => true
     }
 
     def errorStatusMap(error: Throwable) = error match {
@@ -79,35 +86,42 @@ trait RestClient extends EscherDirectives {
     }
 
     for {
-      response <- sendRequestWithRetry(request, maxRetries)(shouldRetry)(errorStatusMap)
+      response <- sendRequestWithRetry(request, retryConfig)(shouldRetry)(errorStatusMap)
     } yield response
   }
 
-  private def sendRequestWithRetry[S](request: HttpRequest, maxRetries: Int)(
+  private def sendRequestWithRetry[S](request: HttpRequest, retryConfig: RetryConfig)(
       shouldRetry: RequestResult => Boolean
   )(
       errorStatusMap: Throwable => (Int, String)
-  ): Future[Either[(Int, String), HttpResponse]] = {
+  ): Future[Either[InternalClientError, HttpResponse]] = {
+    val start = System.nanoTime()
+
+    def isRetriable(retriesLeft: Int, requestResult: RequestResult) = {
+      val elapsed = (System.nanoTime() - start).nanos
+      retriesLeft > 0 && elapsed < retryConfig.dontRetryAfter && shouldRetry(requestResult)
+    }
+
     def wrapResponse(response: HttpResponse): RequestResult = {
       if (response.status.isSuccess()) SuccessfulRequest(response)
       else FailureResponse(response)
     }
 
     def wrapException: PartialFunction[Throwable, RequestResult] = {
-      case NonFatal(error) => RequestError(error)
+      case NonFatal(exception) => RequestException(exception)
     }
 
-    def handleFailedResponse(retriesLeft: Int, fr: FailureResponse) = {
-      val response = fr.response
+    def handleFailedResponse(retriesLeft: Int, failureResponse: FailureResponse) = {
+      val response = failureResponse.response
       consumeResponse[String](response).flatMap { responseBody =>
-        if (retriesLeft > 0 && shouldRetry(fr)) doRetry(responseBody, retriesLeft - 1)
+        if (isRetriable(retriesLeft, failureResponse)) doRetry(responseBody, retriesLeft - 1)
         else failRequest(response.status.intValue(), request, responseBody)
       }
     }
 
-    def handleException(retriesLeft: Int, re: RequestError) = {
-      val error = re.error
-      if (retriesLeft > 0 && shouldRetry(re)) {
+    def handleException(retriesLeft: Int, requestError: RequestException) = {
+      val error = requestError.exception
+      if (isRetriable(retriesLeft, requestError)) {
         doRetry(error.getMessage, retriesLeft - 1)
       } else {
         val (status, cause) = errorStatusMap(error)
@@ -116,17 +130,17 @@ trait RestClient extends EscherDirectives {
     }
 
     def getDelay(retriesLeft: Int): FiniteDuration = {
-      val n = maxRetries - retriesLeft
-      initialDelay * (1 << n) // Math.pow(2, n)... for ints...
+      val n = retryConfig.maxRetries - retriesLeft
+      retryConfig.initialRetryDelay * (1 << (n - 1)) // Math.pow(2, n)... for ints...
     }
 
-    def doRetry(cause: String, retriesLeft: Int): Future[Either[(Int, String), HttpResponse]] = {
+    def doRetry(cause: String, retriesLeft: Int): Future[Either[InternalClientError, HttpResponse]] = {
       logRetry(request, retriesLeft, cause)
       val delay = getDelay(retriesLeft)
       after(delay, system.scheduler)(loop(retriesLeft))
     }
 
-    def loop(retriesLeft: Int): Future[Either[(Int, String), HttpResponse]] = {
+    def loop(retriesLeft: Int): Future[Either[InternalClientError, HttpResponse]] = {
       val result = sendRequest(request)
         .map(wrapResponse)
         .recover(wrapException)
@@ -134,11 +148,11 @@ trait RestClient extends EscherDirectives {
       result.flatMap {
         case SuccessfulRequest(response) => Future.successful(Right(response))
         case fr: FailureResponse         => handleFailedResponse(retriesLeft, fr)
-        case re: RequestError            => handleException(retriesLeft, re)
+        case re: RequestException        => handleException(retriesLeft, re)
       }
     }
 
-    loop(maxRetries)
+    loop(retryConfig.maxRetries)
   }
 
   protected def consumeResponse[S](response: HttpResponse)(implicit um: Unmarshaller[ResponseEntity, S]): Future[S] = {
@@ -147,7 +161,7 @@ trait RestClient extends EscherDirectives {
 
   private def failRequest[S](status: Int, request: HttpRequest, cause: String) = {
     logFailure(status, request, cause)
-    Future.successful(Left((status, cause)))
+    Future.successful(Left(InternalClientError(status, cause)))
   }
 
   private def logRetry[A, S](request: HttpRequest, retriesLeft: Int, cause: String): Unit = {
@@ -158,8 +172,8 @@ trait RestClient extends EscherDirectives {
     system.log.log(failLevel, "Request to {} failed with status: {} / body: {}", request.uri, status, msg)
   }
 
-  private def withHeaderErrorHandling[S](request: HttpRequest): PartialFunction[Either[(Int, String), S], S] = {
-    case Left((status, responseBody)) =>
+  private def withHeaderErrorHandling[S](request: HttpRequest): PartialFunction[Either[InternalClientError, S], S] = {
+    case Left(InternalClientError(status, responseBody)) =>
       throw RestClientException(s"Rest client request failed for ${request.uri}", status, responseBody)
     case Right(response) => response
   }
@@ -169,6 +183,8 @@ object RestClient {
   sealed private[RestClient] trait RequestResult
   final private[RestClient] case class SuccessfulRequest(response: HttpResponse) extends RequestResult
   final private[RestClient] case class FailureResponse(response: HttpResponse)   extends RequestResult
-  final private[RestClient] case class RequestError(error: Throwable)            extends RequestResult
+  final private[RestClient] case class RequestException(exception: Throwable)    extends RequestResult
+
+  final private[RestClient] case class InternalClientError(status: Int, cause: String)
 
 }

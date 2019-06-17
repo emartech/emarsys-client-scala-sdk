@@ -7,6 +7,7 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.stream.{ActorMaterializer, Materializer}
+import com.emarsys.client.Config.RetryConfig
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory
 import org.scalatest.{AsyncWordSpec, Matchers}
@@ -38,11 +39,11 @@ class RelationalDataApiSpec extends AsyncWordSpec with Matchers {
         implicit override val executor     = ex
         override val escherConfig          = eConfig
 
-        override def runSigned[S](request: HttpRequest, serviceName: String, headers: List[String], maxRetries: Int)(
+        override def runSigned[S](request: HttpRequest, serviceName: String, headers: List[String], retryConfig: RetryConfig)(
             implicit um: Unmarshaller[ResponseEntity, S]
         ): Future[S] = {
           calledRequest = Some(request)
-          super.runSigned(request, serviceName, headers, maxRetries)
+          super.runSigned(request, serviceName, headers, retryConfig)
         }
       }
 

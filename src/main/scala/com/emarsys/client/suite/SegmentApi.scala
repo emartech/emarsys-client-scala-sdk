@@ -14,13 +14,13 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 trait SegmentApi extends SuiteClient {
 
   import SegmentApi._
-  val maxRetryCount = 0
+  val retryConfig = defaultRetryConfig.copy(maxRetries = 0)
 
   def create(customerId: Int, payload: CreateRequest): Future[CreateResponse] = {
     val path    = "filter"
     val request = RequestBuilding.Put(Uri(baseUrl(customerId) + path), payload)
 
-    runSuiteRequest[CreateRawResponseData](request, maxRetryCount) map createTransformer
+    runSuiteRequest[CreateRawResponseData](request, retryConfig) map createTransformer
   }
 }
 

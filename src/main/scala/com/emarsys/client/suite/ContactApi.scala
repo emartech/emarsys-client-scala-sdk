@@ -12,14 +12,14 @@ import com.emarsys.client.suite.DataTransformers._
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
 trait ContactApi extends SuiteClient {
-  val maxRetryCount = 0
+  val retryConfig = defaultRetryConfig.copy(maxRetries = 0)
 
 
   def getData(customerId: Int, entity: GetDataRequest): Future[GetDataResponse] = {
     val path    = "contact/getdata"
     val request = RequestBuilding.Post(Uri(baseUrl(customerId) + path), entity)
 
-    runSuiteRequest[GetDataRawResponseData](request, maxRetryCount) map getDataResponseTransformer
+    runSuiteRequest[GetDataRawResponseData](request, retryConfig) map getDataResponseTransformer
   }
 }
 

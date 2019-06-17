@@ -5,6 +5,7 @@ import akka.http.scaladsl.model._
 import akka.stream.{ActorMaterializer, BufferOverflowException, Materializer, StreamTcpException}
 import akka.stream.scaladsl.{Flow, Sink}
 import akka.testkit.TestKit
+import com.emarsys.client.Config.RetryConfig
 import com.emarsys.client.RestClientErrors.RestClientException
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory
@@ -29,7 +30,8 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
     implicit override val executor: ExecutionContextExecutor = self.system.dispatcher
     override val serviceName: String                         = "test"
     override val escherConfig: EscherConfig                  = escherConf
-    override val initialDelay: FiniteDuration                = 10.millis
+    override val defaultRetryConfig: RetryConfig =
+      RetryConfig(maxRetries = 3, dontRetryAfter = 1.second, initialRetryDelay = 10.millis)
   }
 
   "#runRawWithHeader" should {
@@ -38,7 +40,7 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
       override val connectionFlow: Flow[HttpRequest, HttpResponse, _] =
         Flow[HttpRequest].map(_ => HttpResponse(StatusCodes.OK, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
 
-      Await.result(run[String](HttpRequest(uri = url), 3), timeout) shouldBe "{}"
+      Await.result(run[String](HttpRequest(uri = url)), timeout) shouldBe "{}"
     }
 
     "return fail instantly on non server error" in new Scope {
@@ -51,7 +53,7 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
       }
       override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Flow[HttpRequest].statefulMapConcat(counterFn)
 
-      Try(Await.result(run[String](HttpRequest(uri = url), 3), timeout)) shouldBe Failure(
+      Try(Await.result(run[String](HttpRequest(uri = url)), timeout)) shouldBe Failure(
         RestClientException(s"Rest client request failed for $url", 404, "{}")
       )
       counter shouldBe 1
@@ -67,7 +69,7 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
       }
       override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Flow[HttpRequest].statefulMapConcat(counterFn)
 
-      Try(Await.result(run[String](HttpRequest(uri = url), 3), timeout)) shouldBe Failure(
+      Try(Await.result(run[String](HttpRequest(uri = url)), timeout)) shouldBe Failure(
         RestClientException(s"Rest client request failed for $url", 429, "overflow")
       )
       counter shouldBe 1
@@ -83,7 +85,7 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
       }
       override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Flow[HttpRequest].statefulMapConcat(counterFn)
 
-      Try(Await.result(run[String](HttpRequest(uri = url), 3), timeout)) shouldBe Failure(
+      Try(Await.result(run[String](HttpRequest(uri = url)), timeout)) shouldBe Failure(
         RestClientException(s"Rest client request failed for $url", 500, "{}")
       )
       counter shouldBe 4
@@ -99,7 +101,7 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
       }
       override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Flow[HttpRequest].statefulMapConcat(counterFn)
 
-      Try(Await.result(run[String](HttpRequest(uri = url), 3), timeout)) shouldBe Failure(
+      Try(Await.result(run[String](HttpRequest(uri = url)), timeout)) shouldBe Failure(
         RestClientException(s"Rest client request failed for $url", 504, "timeout")
       )
       counter shouldBe 4
@@ -118,7 +120,7 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
       }
       override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Flow[HttpRequest].statefulMapConcat(counterFn)
 
-      Await.result(run[String](HttpRequest(uri = url), 3), timeout) shouldBe "{}"
+      Await.result(run[String](HttpRequest(uri = url)), timeout) shouldBe "{}"
       counter shouldBe 2
     }
 
@@ -133,15 +135,36 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
       }
       override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Flow[HttpRequest].statefulMapConcat(counterFn)
 
+      val retryConfig = defaultRetryConfig.copy(maxRetries = retries, initialRetryDelay = 10.millis)
+
       val start         = System.currentTimeMillis()
-      val result        = Try(Await.result(run[String](HttpRequest(uri = url), retries), timeout))
+      val result        = Try(Await.result(run[String](HttpRequest(uri = url), retryConfig), timeout))
       val end           = System.currentTimeMillis()
-      val expectedDelay = initialDelay * (1 << (retries + 1) - 1)
+      val expectedDelay = retryConfig.initialRetryDelay * (1 << (retries + 1) - 1)
 
       val elapsed = (end - start).millis
       counter shouldBe retries + 1
       result shouldBe Failure(RestClientException(s"Rest client request failed for $url", 500, "{}"))
       elapsed should be > expectedDelay
+    }
+
+    "not retry after dontRetryAfter is elapsed" in new Scope {
+
+      val retries = 4
+      var counter = 0
+      val counterFn = () => {
+        _: HttpRequest => {
+          counter += 1
+          List(HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
+        }
+      }
+      override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Flow[HttpRequest].statefulMapConcat(counterFn)
+      val retryConfig                                                 = RetryConfig(retries, 40.millis, 10.millis)
+
+      val result = Try(Await.result(run[String](HttpRequest(uri = url), retryConfig), timeout))
+
+      counter shouldBe 3
+      result shouldBe Failure(RestClientException(s"Rest client request failed for $url", 500, "{}"))
     }
   }
 
@@ -151,7 +174,7 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
         Flow[HttpRequest].map(_ => HttpResponse(StatusCodes.OK, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
 
       Await
-        .result(runStreamed(HttpRequest(uri = url), 3).map(_.utf8String).runWith(Sink.seq), timeout) shouldBe Seq(
+        .result(runStreamed(HttpRequest(uri = url)).map(_.utf8String).runWith(Sink.seq), timeout) shouldBe Seq(
         "{}"
       )
     }

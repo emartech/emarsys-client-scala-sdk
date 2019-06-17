@@ -12,10 +12,12 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 
 trait DomainAuthenticatedClient extends EscherRestClient {
 
+  val retryConfig = defaultRetryConfig.copy(maxRetries = 3)
+
   def send[S](request: HttpRequest): Future[HttpResponse] = {
     resolveServiceName(request.uri) match {
-      case Some(service) => runRawSigned(request, service, Nil, 3)
-      case None => runRaw(request, 3)
+      case Some(service) => runRawSigned(request, service, Nil, retryConfig)
+      case None => runRaw(request, retryConfig)
     }
   }
 

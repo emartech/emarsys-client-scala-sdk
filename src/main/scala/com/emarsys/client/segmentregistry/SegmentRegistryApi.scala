@@ -25,14 +25,14 @@ trait SegmentRegistryApi extends EscherRestClient {
 
   lazy val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Http().outgoingConnectionHttps(segmentRegistry.host)
 
-  val maxRetryCount = 0
+  val retryConfig = defaultRetryConfig.copy(maxRetries = 0)
 
   def create(customerId: Int, segmentData: SegmentCreatePayload): Future[SegmentRegistryRecord] = {
     runSigned[SegmentRegistryRecord](
       RequestBuilding.Post(Uri(baseUrl + path(customerId)), segmentData),
       serviceName,
       Nil,
-      maxRetryCount
+      retryConfig
     )
   }
 
@@ -41,7 +41,7 @@ trait SegmentRegistryApi extends EscherRestClient {
       RequestBuilding.Put(Uri(baseUrl + path(customerId)), segmentData),
       serviceName,
       Nil,
-      maxRetryCount
+      retryConfig
     )
   }
 
@@ -50,7 +50,7 @@ trait SegmentRegistryApi extends EscherRestClient {
       RequestBuilding.Put(Uri(baseUrl + path(customerId) + "/" + segmentData.id), segmentData),
       serviceName,
       Nil,
-      maxRetryCount
+      retryConfig
     )
   }
 
@@ -59,7 +59,7 @@ trait SegmentRegistryApi extends EscherRestClient {
       RequestBuilding.Delete(Uri(baseUrl + path(customerId) + "/" + segmentId)),
       serviceName,
       Nil,
-      maxRetryCount
+      retryConfig
     ).map(_ => ())
   }
 
