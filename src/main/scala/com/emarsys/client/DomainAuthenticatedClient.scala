@@ -52,7 +52,6 @@ object DomainAuthenticatedClient {
       implicit override val materializer: Materializer         = mat
       implicit override val executor: ExecutionContextExecutor = ex
       override val escherConfig: EscherConfig                  = eConfig
-      override val serviceName: String                         = ""
 
       private val http = Http(sys)
 

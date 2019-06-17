@@ -3,22 +3,21 @@ package com.emarsys.client
 import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.event.Logging
-import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.unmarshalling.{Unmarshal, Unmarshaller}
 import akka.pattern.after
-import akka.stream.scaladsl.{Flow, Sink, Source}
 import akka.stream.{BufferOverflowException, Materializer, StreamTcpException}
+import akka.stream.scaladsl.{Flow, Sink, Source}
 import akka.util.ByteString
 import com.emarsys.client.Config.RetryConfig
-import com.emarsys.escher.akka.http.EscherDirectives
 import spray.json.DeserializationException
 
-import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.duration._
 import scala.util.control.NonFatal
 
-trait RestClient extends EscherDirectives {
+trait RestClient {
   import RestClient._
   import RestClientErrors._
 
@@ -29,7 +28,6 @@ trait RestClient extends EscherDirectives {
   val failLevel: Logging.LogLevel =
     if (Config.emsApi.restClient.errorOnFail) Logging.ErrorLevel else Logging.WarningLevel
   val connectionFlow: Flow[HttpRequest, HttpResponse, _]
-  val serviceName: String
   val defaultRetryConfig: RetryConfig = Config.emsApi.retry
 
   protected def sendRequest(request: HttpRequest): Future[HttpResponse] = {
@@ -41,9 +39,7 @@ trait RestClient extends EscherDirectives {
       retryConfig: RetryConfig = defaultRetryConfig
   ): Source[ByteString, NotUsed] = {
     Source
-      .fromFuture(
-        runRaw(request, retryConfig).map(_.entity.dataBytes)
-      )
+      .fromFuture(runRaw(request, retryConfig).map(_.entity.dataBytes))
       .flatMapConcat(identity)
   }
 

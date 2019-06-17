@@ -7,8 +7,6 @@ import akka.stream.scaladsl.{Flow, Sink}
 import akka.testkit.TestKit
 import com.emarsys.client.Config.RetryConfig
 import com.emarsys.client.RestClientErrors.RestClientException
-import com.emarsys.escher.akka.http.config.EscherConfig
-import com.typesafe.config.ConfigFactory
 import org.scalatest.{Matchers, WordSpecLike}
 import org.scalatest.concurrent.ScalaFutures
 
@@ -19,7 +17,6 @@ import scala.util.{Failure, Try}
 class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpecLike with Matchers with ScalaFutures {
   self =>
 
-  val escherConf   = new EscherConfig(ConfigFactory.load().getConfig("ems-api.escher"))
   implicit val mat = ActorMaterializer()
   val timeout      = 3.seconds
   val url          = "http://test.example.com/testEndpoint"
@@ -28,8 +25,6 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
     implicit override val system: ActorSystem                = self.system
     implicit override val materializer: Materializer         = mat
     implicit override val executor: ExecutionContextExecutor = self.system.dispatcher
-    override val serviceName: String                         = "test"
-    override val escherConfig: EscherConfig                  = escherConf
     override val defaultRetryConfig: RetryConfig =
       RetryConfig(maxRetries = 3, dontRetryAfter = 1.second, initialRetryDelay = 10.millis)
   }
@@ -159,7 +154,7 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
         }
       }
       override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Flow[HttpRequest].statefulMapConcat(counterFn)
-      val retryConfig                                                 = RetryConfig(retries, 40.millis, 10.millis)
+      val retryConfig                                                 = RetryConfig(retries, 50.millis, 10.millis)
 
       val result = Try(Await.result(run[String](HttpRequest(uri = url), retryConfig), timeout))
 
@@ -173,10 +168,7 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
       override val connectionFlow: Flow[HttpRequest, HttpResponse, _] =
         Flow[HttpRequest].map(_ => HttpResponse(StatusCodes.OK, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
 
-      Await
-        .result(runStreamed(HttpRequest(uri = url)).map(_.utf8String).runWith(Sink.seq), timeout) shouldBe Seq(
-        "{}"
-      )
+      Await.result(runStreamed(HttpRequest(uri = url)).map(_.utf8String).runWith(Sink.seq), timeout) shouldBe Seq("{}")
     }
   }
 }

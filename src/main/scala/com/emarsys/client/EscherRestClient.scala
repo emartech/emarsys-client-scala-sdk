@@ -8,11 +8,13 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.emarsys.client.Config.RetryConfig
 import com.emarsys.client.RestClientErrors.InvalidResponseFormatException
+import com.emarsys.escher.akka.http.EscherDirectives
 import spray.json.DeserializationException
 
 import scala.concurrent.Future
 
-trait EscherRestClient extends RestClient {
+trait EscherRestClient extends RestClient with EscherDirectives {
+
   def runStreamSigned(
       request: HttpRequest,
       serviceName: String,

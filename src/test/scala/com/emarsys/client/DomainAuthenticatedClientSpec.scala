@@ -23,7 +23,6 @@ class DomainAuthenticatedClientSpec extends WordSpecLike with Matchers {
     override val executor     = exe
 
     override val escherConfig = new EscherConfig(ConfigFactory.load().getConfig("ems-api.escher"))
-    override val serviceName  = "default"
 
     val service1EscherKey = "service1-key"
 
