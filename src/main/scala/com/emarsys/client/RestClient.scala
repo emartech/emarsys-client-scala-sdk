@@ -47,9 +47,9 @@ trait RestClient {
       implicit um: Unmarshaller[ResponseEntity, S]
   ): Future[S] = {
     runRaw(request, retryConfig).flatMap { response =>
-      consumeResponse[S](response).recoverWith {
+      Unmarshal(response.entity).to[S].recoverWith {
         case err: DeserializationException =>
-          consumeResponse[String](response).flatMap { body =>
+          Unmarshal(response.entity).to[String].flatMap { body =>
             Future.failed(InvalidResponseFormatException(err.getMessage, body, err))
           }
       }
@@ -109,7 +109,7 @@ trait RestClient {
 
     def handleFailedResponse(retriesLeft: Int, failureResponse: FailureResponse) = {
       val response = failureResponse.response
-      consumeResponse[String](response).flatMap { responseBody =>
+      Unmarshal(response.entity).to[String].flatMap { responseBody =>
         if (isRetriable(retriesLeft, failureResponse)) doRetry(responseBody, retriesLeft - 1)
         else failRequest(response.status.intValue(), request, responseBody)
       }
@@ -149,10 +149,6 @@ trait RestClient {
     }
 
     loop(retryConfig.maxRetries)
-  }
-
-  protected def consumeResponse[S](response: HttpResponse)(implicit um: Unmarshaller[ResponseEntity, S]): Future[S] = {
-    Unmarshal(response.entity).to[S]
   }
 
   private def failRequest[S](status: Int, request: HttpRequest, cause: String) = {

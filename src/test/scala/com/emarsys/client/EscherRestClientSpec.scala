@@ -52,7 +52,7 @@ class EscherRestClientSpec
       requests.head.headers.map(_.name()) should contain ("X-Ems-Auth")
       val authHeader = requests.head.headers.find(_.name() == "X-Ems-Auth").value
       authHeader.value() should include("my-header")
-      authHeader.value() should include("service1-key/20190617/service1-scope")
+      authHeader.value() should include regex "service1-key/\\d{8}/service1-scope"
     }
   }
 
@@ -64,7 +64,7 @@ class EscherRestClientSpec
       requests.head.headers.map(_.name()) should contain ("X-Ems-Auth")
       val authHeader = requests.head.headers.find(_.name() == "X-Ems-Auth").value
       authHeader.value() should include("my-header")
-      authHeader.value() should include("service1-key/20190617/service1-scope")
+      authHeader.value() should include regex "service1-key/\\d{8}/service1-scope"
     }
   }
 
@@ -76,7 +76,7 @@ class EscherRestClientSpec
       requests.head.headers.map(_.name()) should contain ("X-Ems-Auth")
       val authHeader = requests.head.headers.find(_.name() == "X-Ems-Auth").value
       authHeader.value() should include("my-header")
-      authHeader.value() should include("service1-key/20190617/service1-scope")
+      authHeader.value() should include regex "service1-key/\\d{8}/service1-scope"
     }
   }
 }

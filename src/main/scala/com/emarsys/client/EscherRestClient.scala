@@ -3,7 +3,7 @@ package com.emarsys.client
 import akka.NotUsed
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse, ResponseEntity}
 import akka.http.scaladsl.model.headers.RawHeader
-import akka.http.scaladsl.unmarshalling.Unmarshaller
+import akka.http.scaladsl.unmarshalling.{Unmarshal, Unmarshaller}
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.emarsys.client.Config.RetryConfig
@@ -30,9 +30,9 @@ trait EscherRestClient extends RestClient with EscherDirectives {
       implicit um: Unmarshaller[ResponseEntity, S]
   ): Future[S] = {
     runRawSigned(request, serviceName, headers, retryConfig).flatMap { response =>
-      consumeResponse[S](response).recoverWith {
+      Unmarshal(response.entity).to[S].recoverWith {
         case err: DeserializationException =>
-          consumeResponse[String](response).flatMap { body =>
+          Unmarshal(response.entity).to[String].flatMap { body =>
             Future.failed(InvalidResponseFormatException(err.getMessage, body, err))
           }
       }
