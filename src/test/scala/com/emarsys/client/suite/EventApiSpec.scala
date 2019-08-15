@@ -16,7 +16,7 @@ import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{AsyncWordSpec, Matchers}
-import spray.json.{JsBoolean, JsObject, JsString}
+import spray.json._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor}
@@ -47,7 +47,7 @@ class EventApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
 
         override lazy val connectionFlow = Flow[HttpRequest].map {
           case HttpRequest(HttpMethods.POST, uri, _, entity, _)
-              if uri.path.toString().endsWith(path) && plainTextParse(entity) == data =>
+              if uri.path.toString().endsWith(path) && plainTextParse(entity).parseJson == data.parseJson =>
             response
           case HttpRequest(HttpMethods.POST, _, _, entity, _) =>
             HttpResponse(BadRequest, entity = plainTextParse(entity))
