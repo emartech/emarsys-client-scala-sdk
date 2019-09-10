@@ -3,18 +3,18 @@ package com.emarsys.client
 import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.event.Logging
-import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.{Unmarshal, Unmarshaller}
 import akka.pattern.after
+import akka.stream.scaladsl.{Flow, Sink, Source, TcpIdleTimeoutException}
 import akka.stream.{BufferOverflowException, Materializer, StreamTcpException}
-import akka.stream.scaladsl.{Flow, Sink, Source}
 import akka.util.ByteString
 import com.emarsys.client.Config.RetryConfig
 import spray.json.DeserializationException
 
-import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.control.NonFatal
 
 trait RestClient {
@@ -29,11 +29,6 @@ trait RestClient {
     if (Config.emsApi.restClient.errorOnFail) Logging.ErrorLevel else Logging.WarningLevel
   val connectionFlow: Flow[HttpRequest, HttpResponse, _]
   val defaultRetryConfig: RetryConfig = Config.emsApi.retry
-
-  protected def sendRequest(request: HttpRequest): Future[HttpResponse] = {
-    Source.single(request).via(connectionFlow).runWith(Sink.head)
-  }
-
   protected def runStreamed(
       request: HttpRequest,
       retryConfig: RetryConfig = defaultRetryConfig
@@ -42,7 +37,6 @@ trait RestClient {
       .fromFuture(runRaw(request, retryConfig).map(_.entity.dataBytes))
       .flatMapConcat(identity)
   }
-
   protected def run[S](request: HttpRequest, retryConfig: RetryConfig = defaultRetryConfig)(
       implicit um: Unmarshaller[ResponseEntity, S]
   ): Future[S] = {
@@ -55,11 +49,9 @@ trait RestClient {
       }
     }
   }
-
   protected def runRaw(request: HttpRequest, retryConfig: RetryConfig = defaultRetryConfig): Future[HttpResponse] = {
     internalRun(request, retryConfig).map(withHeaderErrorHandling(request))
   }
-
   private def internalRun(
       request: HttpRequest,
       retryConfig: RetryConfig
@@ -76,16 +68,15 @@ trait RestClient {
     }
 
     def errorStatusMap(error: Throwable) = error match {
-      case _: BufferOverflowException => (429, error.getMessage)
-      case _: StreamTcpException      => (504, error.getMessage)
-      case otherException             => throw otherException
+      case _: BufferOverflowException                         => (429, error.getMessage)
+      case _: StreamTcpException | _: TcpIdleTimeoutException => (504, error.getMessage)
+      case otherException                                     => throw otherException
     }
 
     for {
       response <- sendRequestWithRetry(request, retryConfig)(shouldRetry)(errorStatusMap)
     } yield response
   }
-
   private def sendRequestWithRetry[S](request: HttpRequest, retryConfig: RetryConfig)(
       shouldRetry: RequestResult => Boolean
   )(
@@ -150,20 +141,19 @@ trait RestClient {
 
     loop(retryConfig.maxRetries)
   }
-
+  protected def sendRequest(request: HttpRequest): Future[HttpResponse] = {
+    Source.single(request).via(connectionFlow).runWith(Sink.head)
+  }
   private def failRequest[S](status: Int, request: HttpRequest, cause: String) = {
     logFailure(status, request, cause)
     Future.successful(Left(InternalClientError(status, cause)))
   }
-
-  private def logRetry[A, S](request: HttpRequest, retriesLeft: Int, cause: String): Unit = {
-    system.log.info("Retrying request: {} / {} attempt(s) left, cause: {}", request.uri, retriesLeft, cause)
-  }
-
   private def logFailure[S](status: Int, request: HttpRequest, msg: String): Unit = {
     system.log.log(failLevel, "Request to {} failed with status: {} / body: {}", request.uri, status, msg)
   }
-
+  private def logRetry[A, S](request: HttpRequest, retriesLeft: Int, cause: String): Unit = {
+    system.log.info("Retrying request: {} / {} attempt(s) left, cause: {}", request.uri, retriesLeft, cause)
+  }
   private def withHeaderErrorHandling[S](request: HttpRequest): PartialFunction[Either[InternalClientError, S], S] = {
     case Left(InternalClientError(status, responseBody)) =>
       throw RestClientException(s"Rest client request failed for ${request.uri}", status, responseBody)

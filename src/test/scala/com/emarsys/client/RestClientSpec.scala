@@ -3,7 +3,7 @@ package com.emarsys.client
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
 import akka.stream.{ActorMaterializer, BufferOverflowException, Materializer, StreamTcpException}
-import akka.stream.scaladsl.{Flow, Sink}
+import akka.stream.scaladsl.{Flow, Sink, TcpIdleTimeoutException}
 import akka.testkit.TestKit
 import com.emarsys.client
 import com.emarsys.client.Config.RetryConfig
@@ -110,6 +110,22 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
         _: HttpRequest => {
           counter += 1
           throw new StreamTcpException("timeout")
+        }
+      }
+      override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Flow[HttpRequest].statefulMapConcat(counterFn)
+
+      Try(Await.result(run[String](HttpRequest(uri = url)), timeout)) shouldBe Failure(
+        RestClientException(s"Rest client request failed for $url", 504, "timeout")
+      )
+      counter shouldBe 4
+    }
+
+    "return 504 if all attempt is failed with tcp idle timeout exception" in new Scope {
+      var counter = 0
+      val counterFn = () => {
+        _: HttpRequest => {
+          counter += 1
+          throw new TcpIdleTimeoutException("timeout", Duration.Zero)
         }
       }
       override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Flow[HttpRequest].statefulMapConcat(counterFn)
