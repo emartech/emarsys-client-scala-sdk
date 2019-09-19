@@ -32,7 +32,7 @@ class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with 
   val emptyProductResponse   = """{"products": {}}"""
   val invalidProductResponse = """{
                                  |    "products": {
-                                 |        "FW14-520087030": {
+                                 |        "invalid": {
                                  |            "item": "FW14-520087030"
                                  |        }
                                  |    }
@@ -42,60 +42,27 @@ class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with 
                                |    "cohort": "AAAA",
                                |    "features": {},
                                |    "products": {
-                               |        "FW14-520087030": {
-                               |            "category": "Big Sale>Ladies>Up to 80% off|Ladies>Categories>T-Shirts (Long Sleeves)",
+                               |        "withImage": {
                                |            "image": "http://demandware.edgesuite.net/aatt_prd/on/demandware.static/-/Sites-Bossini_Catalog/default/dw8923eeb4/images/Products/FW14-520087030/FW14-520087030_01_normal_49.jpg",
-                               |            "item": "FW14-520087030",
-                               |            "link": "http://www.bossini.com/en/ladies-tops-tshirts-long/FW14-520087030.html",
-                               |            "msrp": 130.0,
-                               |            "price": 40.0,
                                |            "title": "Long Sleeve Print Mock Neck T-Shirt"
                                |        },
                                |        "invalid": {
                                |            "item": "FW14-520087030"
                                |        },
-                               |        "FW15-720318090": {
-                               |            "category": "Big Sale>Ladies>Up to 80% off|Ladies>Categories>Sweatshirts",
-                               |            "image": "http://demandware.edgesuite.net/aatt_prd/on/demandware.static/-/Sites-Bossini_Catalog/default/dw8923eeb4/images/Products/FW15-720318090/FW15-720318090_01_normal_97.jpg",
-                               |            "item": "FW15-720318090",
-                               |            "link": "http://www.bossini.com/en/ladies-tops-hoodies-sweatshirt/FW15-720318090.html",
-                               |            "msrp": 280.0,
-                               |            "price": 120.0,
+                               |        "withoutImage": {
                                |            "title": "Long Sleeve Print Fleece Tunic Sweatshirt"
                                |        }
                                |    },
                                |    "session": "179C9E00A32028C",
                                |    "visitor": "4330136DDC76BD77"
                                |}""".stripMargin
-  val validProduct           = """{
+  val validProduct   = """{
                               |  "2129": {
-                              |    "item": "2129",
-                              |    "category": "WOMEN>Accessories",
                               |    "title": "LSL Women Hat 60s Hat",
-                              |    "available": true,
-                              |    "msrp": 55.0,
-                              |    "price": 55.0,
-                              |    "msrp_gpb": "45.76",
-                              |    "price_gpb": "45.76",
-                              |    "link": "http://lifestylelabels.com/lsl-women-hat-60s-hat.html",
-                              |    "image": "http://lifestylelabels.com/pub/media/catalog/product/w/h/wh001.jpg",
-                              |    "zoom_image": "http://lifestylelabels.com/pub/media/catalog/product/w/h/wh001.jpg"
+                              |    "image": "http://lifestylelabels.com/pub/media/catalog/product/w/h/wh001.jpg"
                               |  }
                               |}""".stripMargin
-  val validProductWithNoMsrp = """{
-                              |  "2129": {
-                              |    "item": "2129",
-                              |    "category": "WOMEN>Accessories",
-                              |    "title": "LSL Women Hat 60s Hat",
-                              |    "available": true,
-                              |    "price": 55.0,
-                              |    "price_gpb": "45.76",
-                              |    "link": "http://lifestylelabels.com/lsl-women-hat-60s-hat.html",
-                              |    "image": "http://lifestylelabels.com/pub/media/catalog/product/w/h/wh001.jpg",
-                              |    "zoom_image": "http://lifestylelabels.com/pub/media/catalog/product/w/h/wh001.jpg"
-                              |  }
-                              |}""".stripMargin
-  val invalidProduct         = """{"2129": {}}"""
+  val invalidProduct = """{"2129": {}}"""
 
   "Predict Api" when {
 
@@ -144,22 +111,14 @@ class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with 
         recommendations("validResponse", Some(PredictIdentityHash(emailHash, secret))) map { response =>
           response shouldEqual List(
             Recommendation(
-              "FW14-520087030",
               "Long Sleeve Print Mock Neck T-Shirt",
-              "http://www.bossini.com/en/ladies-tops-tshirts-long/FW14-520087030.html",
-              "http://demandware.edgesuite.net/aatt_prd/on/demandware.static/-/Sites-Bossini_Catalog/default/dw8923eeb4/images/Products/FW14-520087030/FW14-520087030_01_normal_49.jpg",
-              "Big Sale>Ladies>Up to 80% off|Ladies>Categories>T-Shirts (Long Sleeves)",
-              Some(130.0f),
-              40.0f
+              Some(
+                "http://demandware.edgesuite.net/aatt_prd/on/demandware.static/-/Sites-Bossini_Catalog/default/dw8923eeb4/images/Products/FW14-520087030/FW14-520087030_01_normal_49.jpg"
+              )
             ),
             Recommendation(
-              "FW15-720318090",
               "Long Sleeve Print Fleece Tunic Sweatshirt",
-              "http://www.bossini.com/en/ladies-tops-hoodies-sweatshirt/FW15-720318090.html",
-              "http://demandware.edgesuite.net/aatt_prd/on/demandware.static/-/Sites-Bossini_Catalog/default/dw8923eeb4/images/Products/FW15-720318090/FW15-720318090_01_normal_97.jpg",
-              "Big Sale>Ladies>Up to 80% off|Ladies>Categories>Sweatshirts",
-              Some(280.0f),
-              120.0f
+              None
             )
           )
         }
@@ -169,22 +128,14 @@ class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with 
         recommendations("validResponse", Some(PredictIdentityAuth(auth))) map { response =>
           response shouldEqual List(
             Recommendation(
-              "FW14-520087030",
               "Long Sleeve Print Mock Neck T-Shirt",
-              "http://www.bossini.com/en/ladies-tops-tshirts-long/FW14-520087030.html",
-              "http://demandware.edgesuite.net/aatt_prd/on/demandware.static/-/Sites-Bossini_Catalog/default/dw8923eeb4/images/Products/FW14-520087030/FW14-520087030_01_normal_49.jpg",
-              "Big Sale>Ladies>Up to 80% off|Ladies>Categories>T-Shirts (Long Sleeves)",
-              Some(130.0f),
-              40.0f
+              Some(
+                "http://demandware.edgesuite.net/aatt_prd/on/demandware.static/-/Sites-Bossini_Catalog/default/dw8923eeb4/images/Products/FW14-520087030/FW14-520087030_01_normal_49.jpg"
+              )
             ),
             Recommendation(
-              "FW15-720318090",
               "Long Sleeve Print Fleece Tunic Sweatshirt",
-              "http://www.bossini.com/en/ladies-tops-hoodies-sweatshirt/FW15-720318090.html",
-              "http://demandware.edgesuite.net/aatt_prd/on/demandware.static/-/Sites-Bossini_Catalog/default/dw8923eeb4/images/Products/FW15-720318090/FW15-720318090_01_normal_97.jpg",
-              "Big Sale>Ladies>Up to 80% off|Ladies>Categories>Sweatshirts",
-              Some(280.0f),
-              120.0f
+              None
             )
           )
         }
@@ -196,27 +147,8 @@ class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with 
       "return product object if item found" in {
         loadProduct("validProduct", "[itemId]") map { response =>
           response.get shouldEqual Recommendation(
-            "2129",
             "LSL Women Hat 60s Hat",
-            "http://lifestylelabels.com/lsl-women-hat-60s-hat.html",
-            "http://lifestylelabels.com/pub/media/catalog/product/w/h/wh001.jpg",
-            "WOMEN>Accessories",
-            Some(55.0f),
-            55.0f
-          )
-        }
-      }
-
-      "return product object even if msrp is missing" in {
-        loadProduct("validProductWithNoMsrp", "[itemId]") map { response =>
-          response.get shouldEqual Recommendation(
-            "2129",
-            "LSL Women Hat 60s Hat",
-            "http://lifestylelabels.com/lsl-women-hat-60s-hat.html",
-            "http://lifestylelabels.com/pub/media/catalog/product/w/h/wh001.jpg",
-            "WOMEN>Accessories",
-            None,
-            55.0f
+            Some("http://lifestylelabels.com/pub/media/catalog/product/w/h/wh001.jpg")
           )
         }
       }
@@ -266,10 +198,6 @@ class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with 
     case HttpRequest(HttpMethods.GET, uri, _, _, _)
         if validLoadProductUri(uri) && validPath(uri)("productinfo/merchants/validProduct/") =>
       HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, validProduct))
-
-    case HttpRequest(HttpMethods.GET, uri, _, _, _)
-        if validLoadProductUri(uri) && validPath(uri)("productinfo/merchants/validProductWithNoMsrp/") =>
-      HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, validProductWithNoMsrp))
 
     case HttpRequest(HttpMethods.GET, uri, _, _, _)
         if validLoadProductUri(uri) && validPath(uri)("productinfo/merchants/invalidProduct/") =>
