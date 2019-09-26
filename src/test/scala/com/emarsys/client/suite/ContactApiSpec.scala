@@ -3,16 +3,15 @@ package com.emarsys.client.suite
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
-import akka.stream.scaladsl.Flow
 import akka.stream.{ActorMaterializer, Materializer}
+import com.emarsys.client.RestClientErrors.{InvalidResponseFormatException, RestClientException}
+import com.emarsys.client.suite.DataTransformers._
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{AsyncWordSpec, Matchers}
-import DataTransformers._
-import com.emarsys.client.RestClientErrors.{InvalidResponseFormatException, RestClientException}
 
-import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
 class ContactApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
 
@@ -34,7 +33,7 @@ class ContactApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
         implicit override val executor     = ex
         override val escherConfig          = eConfig
 
-        override lazy val connectionFlow = Flow[HttpRequest].map(_ => response)
+        override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = Future.successful(response)
       }
   }
 

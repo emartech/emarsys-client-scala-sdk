@@ -1,16 +1,14 @@
 package com.emarsys.client.segmentregistry
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
 import akka.http.scaladsl.client.RequestBuilding
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.Uri
 import akka.stream.Materializer
+import com.emarsys.client.Config.emsApi.segmentRegistry
 import com.emarsys.client.{EscherRestClient, RestClient}
 import com.emarsys.escher.akka.http.config.EscherConfig
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import com.emarsys.formats.JodaDateTimeFormat._
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse, Uri}
-import akka.stream.scaladsl.Flow
-import com.emarsys.client.Config.emsApi.segmentRegistry
 import org.joda.time.DateTime
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -22,8 +20,6 @@ trait SegmentRegistryApi extends EscherRestClient {
   val serviceName: String = segmentRegistry.serviceName
 
   val baseUrl = s"${segmentRegistry.protocol}://${segmentRegistry.host}:${segmentRegistry.port}"
-
-  lazy val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Http().outgoingConnectionHttps(segmentRegistry.host)
 
   val retryConfig = defaultRetryConfig.copy(maxRetries = 0)
 

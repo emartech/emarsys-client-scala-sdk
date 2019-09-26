@@ -1,9 +1,7 @@
 package com.emarsys.client
 import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse, Uri}
 import akka.stream.Materializer
-import akka.stream.scaladsl.Flow
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigException
 
@@ -52,11 +50,6 @@ object DomainAuthenticatedClient {
       implicit override val materializer: Materializer         = mat
       implicit override val executor: ExecutionContextExecutor = ex
       override val escherConfig: EscherConfig                  = eConfig
-
-      private val http = Http(sys)
-
-      override val connectionFlow: Flow[HttpRequest, HttpResponse, _] =
-        Flow[HttpRequest].mapAsync(1)(request => http.singleRequest(request))
     }
   }
 }

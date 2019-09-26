@@ -1,22 +1,23 @@
 package com.emarsys.client.segmentregistry
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.model._
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes.OK
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.Flow
+import com.emarsys.client.RestClientErrors.{InvalidResponseFormatException, RestClientException}
 import com.emarsys.client.segmentregistry.SegmentRegistryApi.{SegmentCreatePayload, SegmentData, SegmentRegistryRecord}
 import com.emarsys.escher.akka.http.config.EscherConfig
+import com.emarsys.formats.JodaDateTimeFormat._
 import com.typesafe.config.ConfigFactory
 import org.joda.time.{DateTime, DateTimeZone}
-import org.scalatest.{AsyncWordSpec, BeforeAndAfterAll, Matchers}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
+import org.scalatest.{AsyncWordSpec, BeforeAndAfterAll, Matchers}
 import spray.json._
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.unmarshalling.Unmarshal
-import com.emarsys.client.RestClientErrors.{InvalidResponseFormatException, RestClientException}
-import com.emarsys.formats.JodaDateTimeFormat._
+
+import scala.concurrent.Future
 
 class SegmentRegistryApiSpec
     extends AsyncWordSpec
@@ -200,10 +201,9 @@ class SegmentRegistryApiSpec
     system terminate
   }
 
-  override lazy val connectionFlow = Flow[HttpRequest].map {
-
+  override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = Future.successful(request match {
     case HttpRequest(HttpMethods.PUT, uri, _, entity, _)
-        if validPath(uri)(s"customers/$customerId/segments/${segmentData.id}") =>
+      if validPath(uri)(s"customers/$customerId/segments/${segmentData.id}") =>
       val segment = Unmarshal(entity).to[SegmentData].futureValue
       val response = SegmentRegistryRecord(
         segment.id,
@@ -220,7 +220,7 @@ class SegmentRegistryApiSpec
       HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, response.toJson.compactPrint))
 
     case HttpRequest(HttpMethods.PUT, uri, _, entity, _)
-        if validPath(uri)(s"customers/$customerId/segments/$mandatoryOnlySegmentId") =>
+      if validPath(uri)(s"customers/$customerId/segments/$mandatoryOnlySegmentId") =>
       val segment = Unmarshal(entity).to[SegmentData].futureValue
       val response = SegmentRegistryRecord(
         segment.id,
@@ -268,11 +268,11 @@ class SegmentRegistryApiSpec
       HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, response.toJson.compactPrint))
 
     case HttpRequest(HttpMethods.PUT, uri, _, _, _)
-        if validPath(uri)(s"customers/$invalidDateFormatCustomerId/segments") =>
+      if validPath(uri)(s"customers/$invalidDateFormatCustomerId/segments") =>
       respondWithInvalidDate
 
     case HttpRequest(HttpMethods.PUT, uri, _, _, _)
-        if validPath(uri)(s"customers/$invalidResponseCodeCustomerId/segments") =>
+      if validPath(uri)(s"customers/$invalidResponseCodeCustomerId/segments") =>
       HttpResponse(
         StatusCodes.InternalServerError,
         Nil,
@@ -280,11 +280,11 @@ class SegmentRegistryApiSpec
       )
 
     case HttpRequest(HttpMethods.PUT, uri, _, _, _)
-        if validPath(uri)(s"customers/$invalidDateFormatCustomerId/segments/${segmentData.id}") =>
+      if validPath(uri)(s"customers/$invalidDateFormatCustomerId/segments/${segmentData.id}") =>
       respondWithInvalidDate
 
     case HttpRequest(HttpMethods.PUT, uri, _, _, _)
-        if validPath(uri)(s"customers/$invalidResponseCodeCustomerId/segments/${segmentData.id}") =>
+      if validPath(uri)(s"customers/$invalidResponseCodeCustomerId/segments/${segmentData.id}") =>
       HttpResponse(
         StatusCodes.InternalServerError,
         Nil,
@@ -292,7 +292,7 @@ class SegmentRegistryApiSpec
       )
 
     case HttpRequest(HttpMethods.DELETE, uri, _, _, _)
-        if validPath(uri)(s"customers/$customerId/segments/$createSegmentId") =>
+      if validPath(uri)(s"customers/$customerId/segments/$createSegmentId") =>
       HttpResponse(StatusCodes.NoContent)
 
     case HttpRequest(HttpMethods.DELETE, _, _, _, _) =>
@@ -307,10 +307,9 @@ class SegmentRegistryApiSpec
       }
 
     case HttpRequest(HttpMethods.POST, uri, _, _, _)
-        if validPath(uri)(s"customers/$invalidDateFormatCustomerId/segments") =>
+      if validPath(uri)(s"customers/$invalidDateFormatCustomerId/segments") =>
       respondWithInvalidDate
-
-  }
+  })
 
   private def respondWithInvalidDate = {
     val responseString = validResponse.toJson.compactPrint.replace(segmentCreated.toString(dateTimePattern), "invalid")

@@ -3,13 +3,12 @@ package com.emarsys.client
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
 import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.Flow
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory
-import org.scalatest.{Assertion, Matchers, WordSpecLike}
+import org.scalatest.{Matchers, WordSpecLike}
 
-import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 class DomainAuthenticatedClientSpec extends WordSpecLike with Matchers {
 
@@ -33,17 +32,14 @@ class DomainAuthenticatedClientSpec extends WordSpecLike with Matchers {
       request.headers find (_.name() == "X-Ems-Auth") map (_.value())
   }
 
-  private def createConnectionFlow(assert: HttpRequest => Assertion): Flow[HttpRequest, HttpResponse, _] =
-    Flow[HttpRequest] map { request =>
-      assert(request)
-      HttpResponse(StatusCodes.OK, Nil, HttpEntity(ContentTypes.`application/json`, "{}"))
-    }
+  val defaultResponse = Future.successful(HttpResponse(StatusCodes.OK, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
 
   "#sendRequest" when {
     "no trusted service found in config with the given domain" should {
       "not sign the request" in new Scope {
-        override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = createConnectionFlow { request =>
+        override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = {
           getXEmsAuthHeader(request) shouldBe None
+          defaultResponse
         }
 
         private val defaultUri = Uri("https://undefined.com")
@@ -54,8 +50,9 @@ class DomainAuthenticatedClientSpec extends WordSpecLike with Matchers {
 
     "trusted service found in config by the given domain" should {
       "sign the request with service1 credentials" in new Scope {
-        override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = createConnectionFlow { request =>
+        override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = {
           getXEmsAuthHeader(request).getOrElse("") should include(service1EscherKey)
+          defaultResponse
         }
 
         private val serviceUri = Uri("https://service1.com/any/path")
@@ -66,9 +63,11 @@ class DomainAuthenticatedClientSpec extends WordSpecLike with Matchers {
 
     "trusted service found in config by the secondary domain" should {
       "sign the request with service1 credentials" in new Scope {
-        override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = createConnectionFlow { request =>
+        override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = {
           getXEmsAuthHeader(request).getOrElse("") should include(service1EscherKey)
+          defaultResponse
         }
+
 
         private val serviceUri = Uri("https://service1-alias.com/any/path")
 

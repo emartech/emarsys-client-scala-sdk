@@ -1,18 +1,18 @@
 package com.emarsys.client
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpRequest, HttpResponse, StatusCodes}
+import akka.http.scaladsl.model._
+import akka.stream.scaladsl.Sink
 import akka.stream.{ActorMaterializer, Materializer}
-import akka.stream.scaladsl.{Flow, Sink}
 import akka.testkit.TestKit
-import org.scalatest.{Matchers, OptionValues, WordSpecLike}
-import org.scalatest.concurrent.ScalaFutures
 import com.emarsys.client.Config.RetryConfig
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.{Matchers, OptionValues, WordSpecLike}
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContextExecutor}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 
 class EscherRestClientSpec
     extends TestKit(ActorSystem("RestClientSpec"))
@@ -37,11 +37,11 @@ class EscherRestClientSpec
     override val escherConfig: EscherConfig = escherConf
 
     var requests: List[HttpRequest] = List.empty
-    override val connectionFlow: Flow[HttpRequest, HttpResponse, _] =
-      Flow[HttpRequest].map { request =>
-        requests :+= request
-        HttpResponse(StatusCodes.OK, Nil, HttpEntity(ContentTypes.`application/json`, "{}"))
-      }
+    override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = {
+      requests :+= request
+      Future.successful(HttpResponse(StatusCodes.OK, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
+    }
+
   }
 
   "#runSigned" should {

@@ -3,15 +3,10 @@ package com.emarsys.client.suite
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
-import akka.stream.scaladsl.{Flow, Sink}
+import akka.stream.scaladsl.Sink
 import akka.stream.{ActorMaterializer, Materializer}
 import com.emarsys.client.RestClientErrors.RestClientException
-import com.emarsys.client.suite.EventApi.{
-  ExternalEventTrigger,
-  ExternalEventTriggerBatch,
-  ExternalEventTriggerContact,
-  TriggerError
-}
+import com.emarsys.client.suite.EventApi.{ExternalEventTrigger, ExternalEventTriggerBatch, ExternalEventTriggerContact, TriggerError}
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory
 import org.scalatest.concurrent.ScalaFutures
@@ -19,7 +14,7 @@ import org.scalatest.{AsyncWordSpec, Matchers}
 import spray.json._
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContextExecutor}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.util.Try
 
 class EventApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
@@ -45,13 +40,13 @@ class EventApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
         implicit override val executor     = ex
         override val escherConfig          = eConfig
 
-        override lazy val connectionFlow = Flow[HttpRequest].map {
+        override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = Future.successful(request match {
           case HttpRequest(HttpMethods.POST, uri, _, entity, _)
-              if uri.path.toString().endsWith(path) && plainTextParse(entity).parseJson == data.parseJson =>
+            if uri.path.toString().endsWith(path) && plainTextParse(entity).parseJson == data.parseJson =>
             response
           case HttpRequest(HttpMethods.POST, _, _, entity, _) =>
             HttpResponse(BadRequest, entity = plainTextParse(entity))
-        }
+        })
       }
 
     private def plainTextParse(entity: RequestEntity): String = {

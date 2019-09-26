@@ -1,14 +1,12 @@
 package com.emarsys.client.relationaldata
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
 import akka.http.scaladsl.client.RequestBuilding
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.Uri
 import akka.http.scaladsl.model.Uri.{Authority, Host}
 import akka.http.scaladsl.model.headers.RawHeader
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse, Uri}
 import akka.stream.Materializer
-import akka.stream.scaladsl.Flow
 import com.emarsys.client.Config.emsApi.relationalData
 import com.emarsys.client.EscherRestClient
 import com.emarsys.escher.akka.http.config.EscherConfig
@@ -24,14 +22,6 @@ trait RelationalDataApi extends EscherRestClient {
   val retryConfig = defaultRetryConfig.copy(maxRetries = 0)
 
   final val customerIdHeader = "x-suite-customerid"
-
-  lazy val connectionFlow: Flow[HttpRequest, HttpResponse, _] = {
-    if (relationalData.port == 443) {
-      Http().outgoingConnectionHttps(relationalData.host)
-    } else {
-      Http().outgoingConnection(relationalData.host, relationalData.port)
-    }
-  }
 
   def insertIgnore(customerId: Int, tableName: String, payload: Seq[Map[String, JsValue]]) = {
     val path: String = s"/tables/$tableName/records"

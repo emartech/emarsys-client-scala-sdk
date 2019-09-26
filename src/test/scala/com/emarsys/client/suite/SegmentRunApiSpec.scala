@@ -3,7 +3,6 @@ package com.emarsys.client.suite
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes.{InternalServerError, OK}
 import akka.http.scaladsl.model._
-import akka.stream.scaladsl.Flow
 import akka.stream.{ActorMaterializer, Materializer}
 import com.emarsys.client.RestClientErrors.RestClientException
 import com.emarsys.client.suite.SegmentRunApi.{ContactListDetails, SegmentRunResult}
@@ -12,7 +11,7 @@ import com.typesafe.config.ConfigFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{AsyncWordSpec, Matchers}
 
-import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
 class SegmentRunApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
 
@@ -133,7 +132,7 @@ object TestSegmentRunApi {
       implicit override val executor     = ex
       override val escherConfig          = eConfig
 
-      override lazy val connectionFlow = Flow[HttpRequest].map(_ => response)
+      override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = Future.successful(response)
     }
 }
 
@@ -151,7 +150,7 @@ object TestSegmentRunApiForceRenew {
       implicit override val executor     = ex
       override val escherConfig          = eConfig
 
-      override lazy val connectionFlow = Flow[HttpRequest].map {
+      override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = Future.successful(request match {
         case HttpRequest(HttpMethods.POST, uri, _, _, _) if uri.rawQueryString.get == "renew=true" =>
           HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, response))
         case _ =>
@@ -160,7 +159,7 @@ object TestSegmentRunApiForceRenew {
             Nil,
             HttpEntity(ContentTypes.`application/json`, "Query must contain renew=true")
           )
-      }
+      })
     }
 }
 
@@ -178,15 +177,18 @@ object TestSegmentRunApiNoRenew {
       implicit override val executor     = ex
       override val escherConfig          = eConfig
 
-      override lazy val connectionFlow = Flow[HttpRequest].map {
-        case HttpRequest(HttpMethods.POST, uri, _, _, _) if uri.rawQueryString.isEmpty =>
-          HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, response))
-        case _ =>
-          HttpResponse(
-            InternalServerError,
-            Nil,
-            HttpEntity(ContentTypes.`application/json`, "Query must contain renew=true")
-          )
-      }
+      override protected def sendRequest(request: HttpRequest): Future[HttpResponse] =
+        Future.successful(
+          request match {
+            case HttpRequest(HttpMethods.POST, uri, _, _, _) if uri.rawQueryString.isEmpty =>
+              HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, response))
+            case _ =>
+              HttpResponse(
+                InternalServerError,
+                Nil,
+                HttpEntity(ContentTypes.`application/json`, "Query must contain renew=true")
+              )
+          }
+        )
     }
 }

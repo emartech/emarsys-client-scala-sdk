@@ -2,17 +2,17 @@ package com.emarsys.client
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
+import akka.stream.scaladsl.{Sink, TcpIdleTimeoutException}
 import akka.stream.{ActorMaterializer, BufferOverflowException, Materializer, StreamTcpException}
-import akka.stream.scaladsl.{Flow, Sink, TcpIdleTimeoutException}
 import akka.testkit.TestKit
 import com.emarsys.client
 import com.emarsys.client.Config.RetryConfig
 import com.emarsys.client.RestClientErrors.RestClientException
-import org.scalatest.{Matchers, WordSpecLike}
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.{Matchers, WordSpecLike}
 
-import scala.concurrent.{Await, ExecutionContextExecutor}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.util.{Failure, Try}
 
 class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpecLike with Matchers with ScalaFutures {
@@ -33,21 +33,18 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
   "#run" should {
 
     "return ok if everything is ok" in new Scope {
-      override val connectionFlow: Flow[HttpRequest, HttpResponse, _] =
-        Flow[HttpRequest].map(_ => HttpResponse(StatusCodes.OK, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
+      override protected def sendRequest(request: HttpRequest): Future[HttpResponse] =
+        Future.successful(HttpResponse(StatusCodes.OK, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
 
       Await.result(run[String](HttpRequest(uri = url)), timeout) shouldBe "{}"
     }
 
     "return fail instantly on non server error" in new Scope {
       var counter = 0
-      val counterFn = () => {
-        _: HttpRequest => {
-          counter += 1
-          List(HttpResponse(StatusCodes.NotFound, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
-        }
+      override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = {
+        counter += 1
+        Future.successful(HttpResponse(StatusCodes.NotFound, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
       }
-      override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Flow[HttpRequest].statefulMapConcat(counterFn)
 
       Try(Await.result(run[String](HttpRequest(uri = url)), timeout)) shouldBe Failure(
         RestClientException(s"Rest client request failed for $url", 404, "{}")
@@ -57,13 +54,10 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
 
     "return 429 instantly on buffer overflow" in new Scope {
       var counter = 0
-      val counterFn = () => {
-        _: HttpRequest => {
-          counter += 1
-          throw BufferOverflowException("overflow")
-        }
+      override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = {
+        counter += 1
+        Future.failed(BufferOverflowException("overflow"))
       }
-      override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Flow[HttpRequest].statefulMapConcat(counterFn)
 
       Try(Await.result(run[String](HttpRequest(uri = url)), timeout)) shouldBe Failure(
         RestClientException(s"Rest client request failed for $url", 429, "overflow")
@@ -73,13 +67,10 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
 
     "return fail if all attempt is failed with server error" in new Scope {
       var counter = 0
-      val counterFn = () => {
-        _: HttpRequest => {
-          counter += 1
-          List(HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
-        }
+      override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = {
+        counter += 1
+        Future.successful(HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
       }
-      override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Flow[HttpRequest].statefulMapConcat(counterFn)
 
       Try(Await.result(run[String](HttpRequest(uri = url)), timeout)) shouldBe Failure(
         RestClientException(s"Rest client request failed for $url", 500, "{}")
@@ -89,13 +80,10 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
 
     "not retry if maxRetryCount is set to 0" in new Scope {
       var counter = 0
-      val counterFn = () => {
-        _: HttpRequest => {
-          counter += 1
-          List(HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
-        }
+      override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = {
+        counter += 1
+        Future.successful(HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
       }
-      override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Flow[HttpRequest].statefulMapConcat(counterFn)
 
       private val retryConfig: client.Config.RetryConfig = defaultRetryConfig.copy(maxRetries = 0)
       Try(Await.result(run[String](HttpRequest(uri = url), retryConfig), timeout)) shouldBe Failure(
@@ -106,14 +94,10 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
 
     "return 504 if all attempt is failed with stream tcp exception" in new Scope {
       var counter = 0
-      val counterFn = () => {
-        _: HttpRequest => {
-          counter += 1
-          throw new StreamTcpException("timeout")
-        }
+      override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = {
+        counter += 1
+        Future.failed(new StreamTcpException("timeout"))
       }
-      override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Flow[HttpRequest].statefulMapConcat(counterFn)
-
       Try(Await.result(run[String](HttpRequest(uri = url)), timeout)) shouldBe Failure(
         RestClientException(s"Rest client request failed for $url", 504, "timeout")
       )
@@ -122,13 +106,11 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
 
     "return 504 if all attempt is failed with tcp idle timeout exception" in new Scope {
       var counter = 0
-      val counterFn = () => {
-        _: HttpRequest => {
-          counter += 1
-          throw new TcpIdleTimeoutException("timeout", Duration.Zero)
-        }
+
+      override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = {
+        counter += 1
+        Future.failed(new TcpIdleTimeoutException("timeout", Duration.Zero))
       }
-      override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Flow[HttpRequest].statefulMapConcat(counterFn)
 
       Try(Await.result(run[String](HttpRequest(uri = url)), timeout)) shouldBe Failure(
         RestClientException(s"Rest client request failed for $url", 504, "timeout")
@@ -138,17 +120,14 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
 
     "return ok if any attempt is ok in the retry range" in new Scope {
       var counter = 0
-      val counterFn = () => {
-        _: HttpRequest => {
-          counter += 1
-          if (counter < 2)
-            List(HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
-          else
-            List(HttpResponse(StatusCodes.OK, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
-        }
-      }
-      override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Flow[HttpRequest].statefulMapConcat(counterFn)
 
+      override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = {
+        counter += 1
+        if (counter < 2)
+          Future.successful(HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
+        else
+          Future.successful(HttpResponse(StatusCodes.OK, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
+      }
       Await.result(run[String](HttpRequest(uri = url)), timeout) shouldBe "{}"
       counter shouldBe 2
     }
@@ -156,14 +135,10 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
     "use at least exponential backoff when retrying failed request" in new Scope {
       val retries = 4
       var counter = 0
-      val counterFn = () => {
-        _: HttpRequest => {
-          counter += 1
-          List(HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
-        }
+      override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = {
+        counter += 1
+        Future.successful(HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
       }
-      override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Flow[HttpRequest].statefulMapConcat(counterFn)
-
       val retryConfig = defaultRetryConfig.copy(maxRetries = retries, initialRetryDelay = 10.millis)
 
       val start         = System.currentTimeMillis()
@@ -181,14 +156,13 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
 
       val retries = 4
       var counter = 0
-      val counterFn = () => {
-        _: HttpRequest => {
-          counter += 1
-          List(HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
-        }
+
+      override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = {
+        counter += 1
+        Future.successful(HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
       }
-      override val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Flow[HttpRequest].statefulMapConcat(counterFn)
-      val retryConfig                                                 = RetryConfig(retries, 50.millis, 10.millis)
+
+      val retryConfig = RetryConfig(retries, 50.millis, 10.millis)
 
       val result = Try(Await.result(run[String](HttpRequest(uri = url), retryConfig), timeout))
 
@@ -199,8 +173,8 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
 
   "#runStreamed" should {
     "return ok if everything is ok" in new Scope {
-      override val connectionFlow: Flow[HttpRequest, HttpResponse, _] =
-        Flow[HttpRequest].map(_ => HttpResponse(StatusCodes.OK, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
+      override protected def sendRequest(request: HttpRequest): Future[HttpResponse] =
+        Future.successful(HttpResponse(StatusCodes.OK, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
 
       Await.result(runStreamed(HttpRequest(uri = url)).map(_.utf8String).runWith(Sink.seq), timeout) shouldBe Seq("{}")
     }
@@ -208,8 +182,8 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
 
   "#runRaw" should {
     "return ok if everything is ok" in new Scope {
-      override val connectionFlow: Flow[HttpRequest, HttpResponse, _] =
-        Flow[HttpRequest].map(_ => HttpResponse(StatusCodes.OK, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
+      override protected def sendRequest(request: HttpRequest): Future[HttpResponse] =
+        Future.successful(HttpResponse(StatusCodes.OK, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
 
       val result = Await.result(runRaw(HttpRequest(uri = url)), timeout)
       result.status should ===(StatusCodes.OK)

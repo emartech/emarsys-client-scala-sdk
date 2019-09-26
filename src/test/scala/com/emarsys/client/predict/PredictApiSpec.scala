@@ -3,17 +3,18 @@ package com.emarsys.client.predict
 import java.net.URLEncoder
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.StatusCodes._
-import akka.stream.scaladsl.Flow
+import akka.http.scaladsl.model._
 import akka.stream.ActorMaterializer
 import com.emarsys.client.RestClientErrors.RestClientException
 import com.emarsys.client.predict.PredictApi.{PredictIdentityAuth, PredictIdentityHash, Recommendation}
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory
-import org.scalatest.{AsyncWordSpec, Matchers}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
+import org.scalatest.{AsyncWordSpec, Matchers}
+
+import scala.concurrent.Future
 
 class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with PredictApi {
 
@@ -161,52 +162,51 @@ class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with 
     }
   }
 
-  override lazy val connectionFlow = Flow[HttpRequest].map {
-
+  override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = Future.successful(request match {
     case HttpRequest(HttpMethods.GET, uri, _, _, _)
-        if validRecommendationUri(uri) && validPath(uri)("merchants/validResponse/") =>
+      if validRecommendationUri(uri) && validPath(uri)("merchants/validResponse/") =>
       HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, validResponse))
 
     case HttpRequest(HttpMethods.GET, uri, _, _, _)
-        if validRecommendationUriFromAuth(uri) && validPath(uri)("merchants/validResponse/") =>
+      if validRecommendationUriFromAuth(uri) && validPath(uri)("merchants/validResponse/") =>
       HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, validResponse))
 
     case HttpRequest(HttpMethods.GET, uri, _, _, _)
-        if validRecommendationUri(uri) && validPath(uri)("merchants/invalidProductResponse/") =>
+      if validRecommendationUri(uri) && validPath(uri)("merchants/invalidProductResponse/") =>
       HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, invalidProductResponse))
 
     case HttpRequest(HttpMethods.GET, uri, _, _, _)
-        if validRecommendationUriFromAuth(uri) && validPath(uri)("merchants/invalidProductResponse/") =>
+      if validRecommendationUriFromAuth(uri) && validPath(uri)("merchants/invalidProductResponse/") =>
       HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, invalidProductResponse))
 
     case HttpRequest(HttpMethods.GET, uri, _, _, _)
-        if validRecommendationUri(uri) && validPath(uri)("merchants/emptyProductResponse/") =>
+      if validRecommendationUri(uri) && validPath(uri)("merchants/emptyProductResponse/") =>
       HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, emptyProductResponse))
 
     case HttpRequest(HttpMethods.GET, uri, _, _, _)
-        if validRecommendationUriFromAuth(uri) && validPath(uri)("merchants/emptyProductResponse/") =>
+      if validRecommendationUriFromAuth(uri) && validPath(uri)("merchants/emptyProductResponse/") =>
       HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, emptyProductResponse))
 
     case HttpRequest(HttpMethods.GET, uri, _, _, _)
-        if validRecommendationUri(uri) && validPath(uri)("merchants/unauthorizedResponse/") =>
+      if validRecommendationUri(uri) && validPath(uri)("merchants/unauthorizedResponse/") =>
       HttpResponse(Unauthorized, Nil, HttpEntity(ContentTypes.`application/json`, unauthorizedResponse))
 
     case HttpRequest(HttpMethods.GET, uri, _, _, _)
-        if validRecommendationUri(uri) && validPath(uri)("merchants/invalidJsonResponse/") =>
+      if validRecommendationUri(uri) && validPath(uri)("merchants/invalidJsonResponse/") =>
       HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, invalidJsonResponse))
 
     case HttpRequest(HttpMethods.GET, uri, _, _, _)
-        if validLoadProductUri(uri) && validPath(uri)("productinfo/merchants/validProduct/") =>
+      if validLoadProductUri(uri) && validPath(uri)("productinfo/merchants/validProduct/") =>
       HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, validProduct))
 
     case HttpRequest(HttpMethods.GET, uri, _, _, _)
-        if validLoadProductUri(uri) && validPath(uri)("productinfo/merchants/invalidProduct/") =>
+      if validLoadProductUri(uri) && validPath(uri)("productinfo/merchants/invalidProduct/") =>
       HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, invalidProduct))
 
     case r @ HttpRequest(HttpMethods.GET, _, _, _, _) =>
       system.log.error("Unexpected request: {}", r)
       HttpResponse(InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, ""))
-  }
+  })
 
   val validPath = (u: Uri) => u.path.toString endsWith _
   val validHost = (u: Uri) => u.scheme == "https" && u.authority.toString == "recommender.scarabresearch.com"

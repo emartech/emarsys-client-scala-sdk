@@ -3,12 +3,10 @@ package com.emarsys.client.predict
 import java.net.URLEncoder
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
 import akka.http.scaladsl.client.RequestBuilding
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model._
 import akka.stream.Materializer
-import akka.stream.scaladsl.Flow
 import com.emarsys.client.Config.emsApi.predict
 import com.emarsys.client.RestClient
 import com.emarsys.escher.akka.http.config.EscherConfig
@@ -34,7 +32,6 @@ trait PredictApi extends RestClient {
   }
 
   val baseUrl                                                 = s"${predict.protocol}://${predict.host}:${predict.port}"
-  lazy val connectionFlow: Flow[HttpRequest, HttpResponse, _] = Http().outgoingConnectionHttps(predict.host)
 
   def recommendations(merchantId: String, emailHash: String, secret: String): Future[List[Recommendation]] = {
     val path = s"/merchants/$merchantId/"
