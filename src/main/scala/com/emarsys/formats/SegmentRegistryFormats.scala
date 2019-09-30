@@ -1,14 +1,13 @@
 package com.emarsys.formats
 
+import com.emarsys.client.segmentregistry.SegmentRegistryApi._
 import org.joda.time.{DateTime, DateTimeZone}
-import fommil.sjs.FamilyFormats
 import org.joda.time.format.DateTimeFormat
-import spray.json.JsonFormat
 import spray.json._
 
 import scala.util.control.NonFatal
 
-object JodaDateTimeFormat extends DefaultJsonProtocol with FamilyFormats {
+object SegmentRegistryFormats extends DefaultJsonProtocol {
 
   val dateTimePattern = "yyyy-MM-dd HH:mm:ss"
 
@@ -25,4 +24,7 @@ object JodaDateTimeFormat extends DefaultJsonProtocol with FamilyFormats {
     }
   }
 
+  implicit val segmentCreatePayloadF: RootJsonFormat[SegmentCreatePayload]   = jsonFormat7(SegmentCreatePayload.apply)
+  implicit val segmentRegistryRecordF: RootJsonFormat[SegmentRegistryRecord] = jsonFormat10(SegmentRegistryRecord.apply)
+  implicit val segmentDataF: RootJsonFormat[SegmentData]                     = jsonFormat7(SegmentData.apply)
 }

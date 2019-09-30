@@ -150,16 +150,19 @@ object TestSegmentRunApiForceRenew {
       implicit override val executor     = ex
       override val escherConfig          = eConfig
 
-      override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = Future.successful(request match {
-        case HttpRequest(HttpMethods.POST, uri, _, _, _) if uri.rawQueryString.get == "renew=true" =>
-          HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, response))
-        case _ =>
-          HttpResponse(
-            InternalServerError,
-            Nil,
-            HttpEntity(ContentTypes.`application/json`, "Query must contain renew=true")
-          )
-      })
+      override protected def sendRequest(request: HttpRequest): Future[HttpResponse] =
+        Future.successful(
+          request match {
+            case HttpRequest(HttpMethods.POST, uri, _, _, _) if uri.rawQueryString.get == "renew=true" =>
+              HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, response))
+            case _ =>
+              HttpResponse(
+                InternalServerError,
+                Nil,
+                HttpEntity(ContentTypes.`application/json`, "Query must contain renew=true")
+              )
+          }
+        )
     }
 }
 

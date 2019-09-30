@@ -9,7 +9,7 @@ import akka.stream.ActorMaterializer
 import com.emarsys.client.RestClientErrors.{InvalidResponseFormatException, RestClientException}
 import com.emarsys.client.segmentregistry.SegmentRegistryApi.{SegmentCreatePayload, SegmentData, SegmentRegistryRecord}
 import com.emarsys.escher.akka.http.config.EscherConfig
-import com.emarsys.formats.JodaDateTimeFormat._
+import com.emarsys.formats.SegmentRegistryFormats._
 import com.typesafe.config.ConfigFactory
 import org.joda.time.{DateTime, DateTimeZone}
 import org.scalatest.concurrent.ScalaFutures
@@ -201,115 +201,118 @@ class SegmentRegistryApiSpec
     system terminate
   }
 
-  override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = Future.successful(request match {
-    case HttpRequest(HttpMethods.PUT, uri, _, entity, _)
-      if validPath(uri)(s"customers/$customerId/segments/${segmentData.id}") =>
-      val segment = Unmarshal(entity).to[SegmentData].futureValue
-      val response = SegmentRegistryRecord(
-        segment.id,
-        segment.id,
-        customerId,
-        segment.segmentType,
-        segment.name,
-        segmentCreated,
-        segmentCreated,
-        segment.criteriaTypes.get,
-        segment.baseContactListId.get,
-        predefined = true
-      )
-      HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, response.toJson.compactPrint))
+  override protected def sendRequest(request: HttpRequest): Future[HttpResponse] =
+    Future.successful(
+      request match {
+        case HttpRequest(HttpMethods.PUT, uri, _, entity, _)
+            if validPath(uri)(s"customers/$customerId/segments/${segmentData.id}") =>
+          val segment = Unmarshal(entity).to[SegmentData].futureValue
+          val response = SegmentRegistryRecord(
+            segment.id,
+            segment.id,
+            customerId,
+            segment.segmentType,
+            segment.name,
+            segmentCreated,
+            segmentCreated,
+            segment.criteriaTypes.get,
+            segment.baseContactListId.get,
+            predefined = true
+          )
+          HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, response.toJson.compactPrint))
 
-    case HttpRequest(HttpMethods.PUT, uri, _, entity, _)
-      if validPath(uri)(s"customers/$customerId/segments/$mandatoryOnlySegmentId") =>
-      val segment = Unmarshal(entity).to[SegmentData].futureValue
-      val response = SegmentRegistryRecord(
-        segment.id,
-        segment.id,
-        customerId,
-        segment.segmentType,
-        segment.name,
-        segmentCreated,
-        segmentCreated,
-        List(),
-        1,
-        predefined = false
-      )
-      HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, response.toJson.compactPrint))
+        case HttpRequest(HttpMethods.PUT, uri, _, entity, _)
+            if validPath(uri)(s"customers/$customerId/segments/$mandatoryOnlySegmentId") =>
+          val segment = Unmarshal(entity).to[SegmentData].futureValue
+          val response = SegmentRegistryRecord(
+            segment.id,
+            segment.id,
+            customerId,
+            segment.segmentType,
+            segment.name,
+            segmentCreated,
+            segmentCreated,
+            List(),
+            1,
+            predefined = false
+          )
+          HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, response.toJson.compactPrint))
 
-    case HttpRequest(HttpMethods.PUT, uri, _, entity, _) if validPath(uri)(s"customers/$customerId/segments") =>
-      val segment = Unmarshal(entity).to[SegmentData].futureValue
-      val response = if (segment.id == mandatoryOnlySegmentId) {
-        SegmentRegistryRecord(
-          segment.id,
-          segment.id,
-          customerId,
-          segment.segmentType,
-          segment.name,
-          segmentCreated,
-          segmentCreated,
-          List(),
-          1,
-          predefined = false
-        )
-      } else {
-        SegmentRegistryRecord(
-          segment.id,
-          segment.id,
-          customerId,
-          segment.segmentType,
-          segment.name,
-          segmentCreated,
-          segmentCreated,
-          segment.criteriaTypes.get,
-          segment.baseContactListId.get,
-          predefined = true
-        )
+        case HttpRequest(HttpMethods.PUT, uri, _, entity, _) if validPath(uri)(s"customers/$customerId/segments") =>
+          val segment = Unmarshal(entity).to[SegmentData].futureValue
+          val response = if (segment.id == mandatoryOnlySegmentId) {
+            SegmentRegistryRecord(
+              segment.id,
+              segment.id,
+              customerId,
+              segment.segmentType,
+              segment.name,
+              segmentCreated,
+              segmentCreated,
+              List(),
+              1,
+              predefined = false
+            )
+          } else {
+            SegmentRegistryRecord(
+              segment.id,
+              segment.id,
+              customerId,
+              segment.segmentType,
+              segment.name,
+              segmentCreated,
+              segmentCreated,
+              segment.criteriaTypes.get,
+              segment.baseContactListId.get,
+              predefined = true
+            )
+          }
+          HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, response.toJson.compactPrint))
+
+        case HttpRequest(HttpMethods.PUT, uri, _, _, _)
+            if validPath(uri)(s"customers/$invalidDateFormatCustomerId/segments") =>
+          respondWithInvalidDate
+
+        case HttpRequest(HttpMethods.PUT, uri, _, _, _)
+            if validPath(uri)(s"customers/$invalidResponseCodeCustomerId/segments") =>
+          HttpResponse(
+            StatusCodes.InternalServerError,
+            Nil,
+            HttpEntity(ContentTypes.`application/json`, validResponse.toJson.compactPrint)
+          )
+
+        case HttpRequest(HttpMethods.PUT, uri, _, _, _)
+            if validPath(uri)(s"customers/$invalidDateFormatCustomerId/segments/${segmentData.id}") =>
+          respondWithInvalidDate
+
+        case HttpRequest(HttpMethods.PUT, uri, _, _, _)
+            if validPath(uri)(s"customers/$invalidResponseCodeCustomerId/segments/${segmentData.id}") =>
+          HttpResponse(
+            StatusCodes.InternalServerError,
+            Nil,
+            HttpEntity(ContentTypes.`application/json`, validResponse.toJson.compactPrint)
+          )
+
+        case HttpRequest(HttpMethods.DELETE, uri, _, _, _)
+            if validPath(uri)(s"customers/$customerId/segments/$createSegmentId") =>
+          HttpResponse(StatusCodes.NoContent)
+
+        case HttpRequest(HttpMethods.DELETE, _, _, _, _) =>
+          HttpResponse(StatusCodes.InternalServerError)
+
+        case HttpRequest(HttpMethods.POST, uri, _, entity, _) if validPath(uri)(s"customers/$customerId/segments") =>
+          val segment = Unmarshal(entity).to[SegmentCreatePayload].futureValue
+          if (segment.id.isEmpty || segment.id.contains(createSegmentId)) {
+            HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, validResponse.toJson.compactPrint))
+          } else {
+            HttpResponse(StatusCodes.InternalServerError)
+          }
+
+        case HttpRequest(HttpMethods.POST, uri, _, _, _)
+            if validPath(uri)(s"customers/$invalidDateFormatCustomerId/segments") =>
+          respondWithInvalidDate
       }
-      HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, response.toJson.compactPrint))
-
-    case HttpRequest(HttpMethods.PUT, uri, _, _, _)
-      if validPath(uri)(s"customers/$invalidDateFormatCustomerId/segments") =>
-      respondWithInvalidDate
-
-    case HttpRequest(HttpMethods.PUT, uri, _, _, _)
-      if validPath(uri)(s"customers/$invalidResponseCodeCustomerId/segments") =>
-      HttpResponse(
-        StatusCodes.InternalServerError,
-        Nil,
-        HttpEntity(ContentTypes.`application/json`, validResponse.toJson.compactPrint)
-      )
-
-    case HttpRequest(HttpMethods.PUT, uri, _, _, _)
-      if validPath(uri)(s"customers/$invalidDateFormatCustomerId/segments/${segmentData.id}") =>
-      respondWithInvalidDate
-
-    case HttpRequest(HttpMethods.PUT, uri, _, _, _)
-      if validPath(uri)(s"customers/$invalidResponseCodeCustomerId/segments/${segmentData.id}") =>
-      HttpResponse(
-        StatusCodes.InternalServerError,
-        Nil,
-        HttpEntity(ContentTypes.`application/json`, validResponse.toJson.compactPrint)
-      )
-
-    case HttpRequest(HttpMethods.DELETE, uri, _, _, _)
-      if validPath(uri)(s"customers/$customerId/segments/$createSegmentId") =>
-      HttpResponse(StatusCodes.NoContent)
-
-    case HttpRequest(HttpMethods.DELETE, _, _, _, _) =>
-      HttpResponse(StatusCodes.InternalServerError)
-
-    case HttpRequest(HttpMethods.POST, uri, _, entity, _) if validPath(uri)(s"customers/$customerId/segments") =>
-      val segment = Unmarshal(entity).to[SegmentCreatePayload].futureValue
-      if (segment.id.isEmpty || segment.id.contains(createSegmentId)) {
-        HttpResponse(OK, Nil, HttpEntity(ContentTypes.`application/json`, validResponse.toJson.compactPrint))
-      } else {
-        HttpResponse(StatusCodes.InternalServerError)
-      }
-
-    case HttpRequest(HttpMethods.POST, uri, _, _, _)
-      if validPath(uri)(s"customers/$invalidDateFormatCustomerId/segments") =>
-      respondWithInvalidDate
-  })
+    )
 
   private def respondWithInvalidDate = {
     val responseString = validResponse.toJson.compactPrint.replace(segmentCreated.toString(dateTimePattern), "invalid")

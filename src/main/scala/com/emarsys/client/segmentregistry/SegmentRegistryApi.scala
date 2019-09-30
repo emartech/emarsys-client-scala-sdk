@@ -8,7 +8,7 @@ import akka.stream.Materializer
 import com.emarsys.client.Config.emsApi.segmentRegistry
 import com.emarsys.client.{EscherRestClient, RestClient}
 import com.emarsys.escher.akka.http.config.EscherConfig
-import com.emarsys.formats.JodaDateTimeFormat._
+import com.emarsys.formats.SegmentRegistryFormats._
 import org.joda.time.DateTime
 
 import scala.concurrent.{ExecutionContextExecutor, Future}

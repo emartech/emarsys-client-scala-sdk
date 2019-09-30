@@ -25,7 +25,6 @@ libraryDependencies ++= {
     "com.typesafe.akka"     %% "akka-http"            % akkaHttpV,
     "com.typesafe.akka"     %% "akka-http-spray-json" % akkaHttpV,
     "com.typesafe.akka"     %% "akka-http-testkit"    % akkaHttpV % Test,
-    "com.github.fommil"     %% "spray-json-shapeless" % "1.4.0",
     "org.scalatest"         %% "scalatest"            % scalaTestV % Test,
     "com.emarsys"           %% "escher-akka-http"     % "1.0.6",
     "joda-time"             % "joda-time"             % "2.9.1",

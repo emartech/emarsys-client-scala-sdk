@@ -9,8 +9,8 @@ import akka.http.scaladsl.model._
 import akka.stream.Materializer
 import com.emarsys.client.Config.emsApi.predict
 import com.emarsys.client.RestClient
+import com.emarsys.formats.PredictFormats._
 import com.emarsys.escher.akka.http.config.EscherConfig
-import fommil.sjs.FamilyFormats._
 import spray.json._
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -31,7 +31,7 @@ trait PredictApi extends RestClient {
     }
   }
 
-  val baseUrl                                                 = s"${predict.protocol}://${predict.host}:${predict.port}"
+  val baseUrl = s"${predict.protocol}://${predict.host}:${predict.port}"
 
   def recommendations(merchantId: String, emailHash: String, secret: String): Future[List[Recommendation]] = {
     val path = s"/merchants/$merchantId/"
