@@ -18,18 +18,18 @@ scalacOptions ++= Seq(
 )
 
 libraryDependencies ++= {
-  val akkaHttpV  = "10.1.9"
-  val scalaTestV = "3.0.4"
+  val akkaHttpV  = "10.1.10"
+  val scalaTestV = "3.0.8"
   Seq(
     "com.typesafe.akka"     %% "akka-http-core"       % akkaHttpV,
     "com.typesafe.akka"     %% "akka-http"            % akkaHttpV,
     "com.typesafe.akka"     %% "akka-http-spray-json" % akkaHttpV,
     "com.typesafe.akka"     %% "akka-http-testkit"    % akkaHttpV % Test,
     "org.scalatest"         %% "scalatest"            % scalaTestV % Test,
-    "com.emarsys"           %% "escher-akka-http"     % "1.0.6",
-    "joda-time"             % "joda-time"             % "2.9.1",
-    "org.joda"              % "joda-convert"          % "2.0.1",
-    "com.github.pureconfig" %% "pureconfig"           % "0.11.1"
+    "com.emarsys"           %% "escher-akka-http"     % "1.0.7",
+    "joda-time"             % "joda-time"             % "2.10.4",
+    "org.joda"              % "joda-convert"          % "2.2.1",
+    "com.github.pureconfig" %% "pureconfig"           % "0.12.1"
   )
 }
 

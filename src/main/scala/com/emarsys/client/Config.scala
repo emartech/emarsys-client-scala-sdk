@@ -1,14 +1,11 @@
 package com.emarsys.client
 
 import scala.concurrent.duration.FiniteDuration
-import pureconfig.{CamelCase, ConfigFieldMapping}
+import pureconfig._
 import pureconfig.generic.ProductHint
 import pureconfig.generic.auto._
 
 trait Config {
-
-  import pureconfig.loadConfigOrThrow
-
   implicit def hint[T]: ProductHint[T] = ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
 
   case class EmsApiConfig(
@@ -55,10 +52,7 @@ trait Config {
       errorOnFail: Boolean = true
   )
 
-//  private implicit def
-
-  val emsApi: EmsApiConfig = loadConfigOrThrow[EmsApiConfig]("ems-api")
-
+  val emsApi: EmsApiConfig = ConfigSource.default.at("ems-api").loadOrThrow[EmsApiConfig]
 }
 
 object Config extends Config
