@@ -15,7 +15,7 @@ trait DomainAuthenticatedClient extends EscherRestClient {
   def send[S](request: HttpRequest): Future[HttpResponse] = {
     resolveServiceName(request.uri) match {
       case Some(service) => runRawSigned(request, service, Nil, retryConfig)
-      case None => runRaw(request, retryConfig)
+      case None          => runRaw(request, retryConfig)
     }
   }
 

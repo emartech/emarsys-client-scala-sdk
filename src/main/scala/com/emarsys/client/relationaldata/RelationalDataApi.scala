@@ -17,8 +17,8 @@ import scala.concurrent.ExecutionContextExecutor
 
 trait RelationalDataApi extends EscherRestClient {
 
-  val serviceName   = relationalData.serviceName
-  val baseUrl       = Uri(scheme = s"${relationalData.protocol}", authority = Authority(host = Host(relationalData.host))) + relationalData.basePath
+  val serviceName = relationalData.serviceName
+  val baseUrl     = Uri(scheme = s"${relationalData.protocol}", authority = Authority(host = Host(relationalData.host))) + relationalData.basePath
   val retryConfig = defaultRetryConfig.copy(maxRetries = 0)
 
   final val customerIdHeader = "x-suite-customerid"

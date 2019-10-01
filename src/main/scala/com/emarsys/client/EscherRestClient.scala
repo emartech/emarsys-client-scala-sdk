@@ -26,7 +26,12 @@ trait EscherRestClient extends RestClient with EscherDirectives {
       .flatMapConcat(identity)
   }
 
-  protected def runSigned[S](request: HttpRequest, serviceName: String, headers: List[String] = Nil, retryConfig: RetryConfig = defaultRetryConfig)(
+  protected def runSigned[S](
+      request: HttpRequest,
+      serviceName: String,
+      headers: List[String] = Nil,
+      retryConfig: RetryConfig = defaultRetryConfig
+  )(
       implicit um: Unmarshaller[ResponseEntity, S]
   ): Future[S] = {
     runRawSigned(request, serviceName, headers, retryConfig).flatMap { response =>

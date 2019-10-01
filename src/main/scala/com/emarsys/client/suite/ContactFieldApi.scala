@@ -16,7 +16,6 @@ trait ContactFieldApi extends SuiteClient {
   import ContactFieldApi._
   val retryConfig = defaultRetryConfig.copy(maxRetries = 0)
 
-
   def list(customerId: Int): Future[ListResponse] = {
     val path = "field"
     callList(customerId, path)

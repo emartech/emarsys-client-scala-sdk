@@ -49,7 +49,7 @@ class EscherRestClientSpec
       Await.result(runSigned[String](HttpRequest(uri = url), serviceName, List("my-header")), timeout) shouldBe "{}"
 
       requests should have size 1
-      requests.head.headers.map(_.name()) should contain ("X-Ems-Auth")
+      requests.head.headers.map(_.name()) should contain("X-Ems-Auth")
       val authHeader = requests.head.headers.find(_.name() == "X-Ems-Auth").value
       authHeader.value() should include("my-header")
       authHeader.value() should include regex "service1-key/\\d{8}/service1-scope"
@@ -61,7 +61,7 @@ class EscherRestClientSpec
       Await.result(runRawSigned(HttpRequest(uri = url), serviceName, List("my-header")), timeout)
 
       requests should have size 1
-      requests.head.headers.map(_.name()) should contain ("X-Ems-Auth")
+      requests.head.headers.map(_.name()) should contain("X-Ems-Auth")
       val authHeader = requests.head.headers.find(_.name() == "X-Ems-Auth").value
       authHeader.value() should include("my-header")
       authHeader.value() should include regex "service1-key/\\d{8}/service1-scope"
@@ -73,7 +73,7 @@ class EscherRestClientSpec
       runStreamSigned(HttpRequest(uri = url), serviceName, List("my-header")).runWith(Sink.ignore)
 
       requests should have size 1
-      requests.head.headers.map(_.name()) should contain ("X-Ems-Auth")
+      requests.head.headers.map(_.name()) should contain("X-Ems-Auth")
       val authHeader = requests.head.headers.find(_.name() == "X-Ems-Auth").value
       authHeader.value() should include("my-header")
       authHeader.value() should include regex "service1-key/\\d{8}/service1-scope"

@@ -32,7 +32,8 @@ class DomainAuthenticatedClientSpec extends WordSpecLike with Matchers {
       request.headers find (_.name() == "X-Ems-Auth") map (_.value())
   }
 
-  val defaultResponse = Future.successful(HttpResponse(StatusCodes.OK, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
+  val defaultResponse =
+    Future.successful(HttpResponse(StatusCodes.OK, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
 
   "#sendRequest" when {
     "no trusted service found in config with the given domain" should {
@@ -67,7 +68,6 @@ class DomainAuthenticatedClientSpec extends WordSpecLike with Matchers {
           getXEmsAuthHeader(request).getOrElse("") should include(service1EscherKey)
           defaultResponse
         }
-
 
         private val serviceUri = Uri("https://service1-alias.com/any/path")
 

@@ -69,7 +69,9 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
       var counter = 0
       override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = {
         counter += 1
-        Future.successful(HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
+        Future.successful(
+          HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, "{}"))
+        )
       }
 
       Try(Await.result(run[String](HttpRequest(uri = url)), timeout)) shouldBe Failure(
@@ -82,7 +84,9 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
       var counter = 0
       override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = {
         counter += 1
-        Future.successful(HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
+        Future.successful(
+          HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, "{}"))
+        )
       }
 
       private val retryConfig: client.Config.RetryConfig = defaultRetryConfig.copy(maxRetries = 0)
@@ -124,7 +128,9 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
       override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = {
         counter += 1
         if (counter < 2)
-          Future.successful(HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
+          Future.successful(
+            HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, "{}"))
+          )
         else
           Future.successful(HttpResponse(StatusCodes.OK, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
       }
@@ -137,7 +143,9 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
       var counter = 0
       override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = {
         counter += 1
-        Future.successful(HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
+        Future.successful(
+          HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, "{}"))
+        )
       }
       val retryConfig = defaultRetryConfig.copy(maxRetries = retries, initialRetryDelay = 10.millis)
 
@@ -159,7 +167,9 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
 
       override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = {
         counter += 1
-        Future.successful(HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
+        Future.successful(
+          HttpResponse(StatusCodes.InternalServerError, Nil, HttpEntity(ContentTypes.`application/json`, "{}"))
+        )
       }
 
       val retryConfig = RetryConfig(retries, 50.millis, 10.millis)

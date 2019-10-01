@@ -19,7 +19,6 @@ trait EventApi extends SuiteClient {
 
   val retryConfig = defaultRetryConfig.copy(maxRetries = 0)
 
-
   implicit val formatForMap     = jsonFormat3(SuiteRawResponse[Map[String, String]])
   implicit val formatForJsValue = jsonFormat3(SuiteRawResponse[JsValue])
 
