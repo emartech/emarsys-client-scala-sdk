@@ -1,4 +1,4 @@
-val scalaV = "2.12.8"
+val scalaV = "2.12.10"
 
 name         := "emarsys-client-scala-sdk"
 organization := "com.emarsys"
@@ -38,6 +38,8 @@ addCompilerPlugin("io.tryp" % "splain" % "0.4.1" cross CrossVersion.patch)
 scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
 
 scalaVersion in ThisBuild := scalaV
+
+Global / onChangedBuildSource := ReloadOnSourceChanges
 
 inThisBuild(
   List(
