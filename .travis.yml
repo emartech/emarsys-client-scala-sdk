@@ -1,0 +1,46 @@
+sudo: false
+language: scala
+jdk:
+  - oraclejdk11
+
+scala_version_212: &scala_version_212 "2.12.10"
+scala_version_213: &scala_version_213 "2.13.0"
+
+before_install:
+  - git fetch --tags
+
+stages:
+  - name: test
+  - name: release
+    if: "((branch = master AND type = push) OR (tag IS present)) AND NOT fork"
+
+jobs:
+  include:
+    - stage: test
+      name: formatting
+      script: sbt scalafmtCheckAll
+    - stage: test
+      name: test 2.12
+      script: sbt ++$TRAVIS_SCALA_VERSION test
+      scala: *scala_version_212
+    - stage: test
+      name: test 2.13
+      script: sbt ++$TRAVIS_SCALA_VERSION test
+      scala: *scala_version_213
+    - stage: release
+      name: release
+      script: sbt ci-release
+
+cache:
+  directories:
+    - "$HOME/.cache/coursier"
+    - "$HOME/.sbt"
+
+before_cache:
+  - find $HOME/.sbt -name "*.lock" -print -delete
+
+env:
+  global:
+  - secure: eFxu1JcL2YErb16SoG58jXQGZVNm83B/uuQIp9AWhWR1Bk71QYD54wafJ/E00XuQvVuU2PhduiJcD4ukSxYKCJWyqY3z/Na/get+wxV7lW8ELGapN0QgyWsgpbCWGiDHG8uWtiWlAMtDtHlI6U7GuGoI+ALICv/F98uj5mVe2vtICs8ikbTusOQU7Xgb4yaTndgXpy6hwhWjnTO6d1o1xgBcnikqZON69uoapJFPAhX4txHHGGZ+vsHL5Kqwl3g59Qb7FiLJ/QWsmX9mib0QrXn/P9tWrCrPJPgVQ7t1Y61yhBFvLtBtb7cb7emV+A8jONkzl8DihQqRQIUuYo4Aa40PTwv4YITq6ZQyyo/A5vWDlAlA23Vni8VTUXIWIwlYMY0/zfiq2a1FlZUvfVlBbYpws6ywx3CVWgctvFcoFcoclEf/rqIYGX7XYiwNxnBn3Q4jWYt9eilieNoWlX9V8paq452+PhURGQQELl1JgRwOViIICU5JswuPtqankyNr74MBirvWowB6nVvCa9A8OjGHrR91WOh6HvRf5sQDY+flE06nBrboBR82QVWMhiKlz1vDOpXaVITktz2hMclZXY0AUgn4jRqhDhrb79QS4HWE63G2ugi+r964LgBuf8Cod7ln39FxjfKvDRRkDh8Onm2cpWhYVpF7qshH71gbE+A=
+  - secure: wkSiYPV25dvr5P8cmOpYEAlp3XftjS/qi+1eqkZAz0QAi5sL1j38GyDnnmcfshelGRa070HBV54DNpQyNx7G35n8kKAlnYOEPYkuCnbmPfYHY3X8cqJsL81VcgJ3Yy2jY9GilqOCPS9H8+IQ54AcAYIZuBA04OEmhEb6xiFw/3IUDkJqnEv391URwvHk/0X7bmJna8dxBccUBQIQpux2F10bCA9yAtHpTXZ8KumGX82IyLhdEwXuJDIeDWCi3CsVhNA7y9849QDqE9NN4k78UusTv4mQPpCA4wXXYwyX4T1zhENa+pc/9+otI/Hth9hevzWpW/bzbZfDWQ4Xxu1LRdnyDHbdB8JbzgB5RdLW9aa1h0k7tDXXb7Ck0xkRRaHPdtQTdlRy2XUIkk1y40UaPfB16kAYWAyfHlLbURRC3RMho7XAHMuUeYfNjZ/1jJ2LYNh9XuazYTG27QpwKS+IqNLCxa7q/8RHY3jVjKBM24RAHB7KlXDauwdXssgTClHW639PsXMkZka3Do1IAQfHSGB+bd2UR9PmBEdi/q2w5vtIx/1iT9T7SzkjOHPPWwjP5bIUKYh43wDI6QtTxoxTYCI1uhpbENan1+MhVyz/Pt3/CUHE5LM0rJLnRz0F6+w6QIdjm7fCA9z7Ifin+Ba0q8AyZBckA+QKrwYxxsmrdEA=
+  - secure: nsDX/FydHf4BqWRM07vYMUDVC2YWP8m/ge+JuS6511mP7kCuZ58hWlll8aT2Cv4CdKgwCoUQnGLY0sW3+J1mbJyCYGTzfaAJRNQTdrWe9p30FzjC1BMbMKr3sxhAdxFKyA/7PQbiv9xEYCPe3tvFM8XpZMCucA7GIRuC74AW6M06UzOeKMJYvLyQlJVKeZbqfVnP+Qygh5/WnxzxNU20rQTXPa1V2P6ZjxYlCxGcN6b7/19U63diAInEwLeNSuJkeJ4XnlP45uARHT7oE+GDVjyVXNAQ0C3A+tb7zs0dUPKJm8U805sIEHuJEeXjVZxAwo2PTBQ6KZqdnfClxt2nwR+dxrqW7iVUlS6qHCkJEaCVhZw3wRVlw+VsTUChYpmY252528NA6EUXT0KItJPkyV5xZ3KmXwhmdwnS3gM1zUn4phn3SkHD4lZPt+iSx0IRob2zS5n/wtOhdyTSdqc4fLVe2Z4dyi9y8c8bzAZnKpAKQB/blghbVPyBYBuPBCZ1c7H4wtAihkES/UGOlKwW1zvfXlARE1WFsZIU+1IrUv0V1EWGVTpYvJYopnaYx30GJdKRwt/YAY8ER5pTBK+GbDEbRuhc2j+I7iS8rKGkoIkmK4W/5u82R2BnGJamybqkv3xGysp8CouirnvBQM4Ep0pVbcpAZEcdEq6yXM5C/KQ=

@@ -1,21 +1,8 @@
-val scalaV = "2.12.10"
-
-name         := "emarsys-client-scala-sdk"
 organization := "com.emarsys"
-scalaVersion := scalaV
+name         := "emarsys-client-scala-sdk"
+crossScalaVersions := List("2.13.0", "2.12.10")
 
-scalacOptions ++= Seq(
-  "-deprecation",
-  "-encoding",
-  "UTF-8",
-  "-unchecked",
-  "-feature",
-  "-language:implicitConversions",
-  "-language:postfixOps",
-  "-Ywarn-dead-code",
-  "-Xlint",
-  "-Xfatal-warnings"
-)
+scalacOptions := scalacOptionsFor(scalaVersion.value)
 
 libraryDependencies ++= {
   val akkaHttpV  = "10.1.10"
@@ -36,8 +23,6 @@ libraryDependencies ++= {
 addCompilerPlugin("io.tryp" % "splain" % "0.4.1" cross CrossVersion.patch)
 
 scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
-
-scalaVersion in ThisBuild := scalaV
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
@@ -60,18 +45,31 @@ inThisBuild(
       Developer("tg44", "Gergo Torcsvari", "gergo.torcsvari@emarsys.com", url("https://github.com/tg44")),
       Developer("kartonfarkas", "Gabor Manner", "gabor.manner@emarsys.com", url("https://github.com/kartonfarkas")),
       Developer("dani3lb", "Daniel Balazs", "daniel.balazs@emarsys.com", url("https://github.com/dani3lb"))
-    ),
-    scmInfo := Some(
-      ScmInfo(
-        url("https://github.com/emartech/emarsys-client-scala-sdk"),
-        "scm:git:git@github.com:emartech/emarsys-client-scala-sdk.git"
-      )
-    ),
-    // These are the sbt-release-early settings to configure
-    pgpPublicRing := file("./ci/local.pubring.asc"),
-    pgpSecretRing := file("./ci/local.secring.asc"),
-    releaseEarlyWith := SonatypePublisher
+    )
   )
 )
 
 fork in Test := true
+
+def scalacOptionsFor(scalaVersion: String) =
+  Seq(
+    "-deprecation",
+    "-encoding",
+    "UTF-8",
+    "-unchecked",
+    "-feature",
+    "-language:implicitConversions",
+    "-language:postfixOps",
+    "-Ywarn-dead-code",
+    "-Xlint"
+  ) ++ (if (is2_12(scalaVersion))
+          Seq(
+            "-Xfatal-warnings"
+          )
+        else Seq())
+
+def is2_12(scalaVersion: String): Boolean =
+  CrossVersion.partialVersion(scalaVersion) match {
+    case Some((2, 12)) => true
+    case _             => false
+  }
