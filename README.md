@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/emartech/emarsys-client-scala-sdk.svg?branch=master)](https://travis-ci.org/emartech/emarsys-client-scala-sdk)
 [![Maven Central](https://img.shields.io/maven-central/v/com.emarsys/emarsys-client-scala-sdk_2.12.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.emarsys%22%20AND%20a:%22emarsys-client-scala-sdk_2.12%22)
 
 # emarsys-client-scala-sdk
@@ -9,9 +10,17 @@
 Add the following to `build.sbt`:
 
 ```
-libraryDependencies += "com.emarsys" %% "emasys-client-scala-sdk" % "0.4.10"
+libraryDependencies += "com.emarsys" %% "emasys-client-scala-sdk" % "x.y.z"
 ```
 
+The latest released version is on the maven badge at the top of this document.
+
+If you need some functionality that is not released yet, you can depend on the snapshot release. Every push to master will be released as a snapshot, you can find the exact version in the [build output] under the `Release` stage.
+
+To depend on a snapshot, include the following in your `build.sbt`
+```scala
+resolvers += Resolver.sonatypeRepo("snapshots")
+```
 
 ### Prior to `0.4.10`
 
@@ -26,21 +35,16 @@ libraryDependencies += "com.emarsys" % "emarsys-client-scala-sdk" % "0.4.9"
 
 ## Creating a release
 
-This library is using [sbt-release-early] for releasing artifacts. Every push will be released to maven central, see the plugins documentation on the versioning schema.
-
-### To cut a final release:
-
 Choose the appropriate version number according to [semver] then create and push a tag with it, prefixed with `v`.
 For example:
 
 ```
-$ git tag -a v1.0.3
+$ git tag -s v1.0.3
 $ git push --tag
 ```
 
 After pushing the tag, while it is not strictly necessary, please [draft a release on github] with this tag too.
 
-
-[sbt-release-early]: https://github.com/scalacenter/sbt-release-early
+[build output]: https://travis-ci.org/emartech/emarsys-client-scala-sdk
 [semver]: https://semver.org
 [draft a release on github]: https://github.com/emartech/emarsys-client-scala-sdk/releases/new
