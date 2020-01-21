@@ -5,7 +5,7 @@ import java.util.Optional
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.RawHeader
-import akka.http.scaladsl.unmarshalling.Unmarshaller
+import akka.http.scaladsl.unmarshalling.{Unmarshal, Unmarshaller}
 import akka.stream.{ActorMaterializer, Materializer}
 import com.emarsys.client.Config.RetryConfig
 import com.emarsys.escher.akka.http.config.EscherConfig
@@ -13,7 +13,8 @@ import com.typesafe.config.ConfigFactory
 import org.scalatest.{AsyncWordSpec, Matchers}
 import spray.json.JsString
 
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
+import scala.concurrent.duration.Duration
 
 class RelationalDataApiSpec extends AsyncWordSpec with Matchers {
   implicit val system       = ActorSystem("relational-data-api-test-system")
@@ -25,14 +26,12 @@ class RelationalDataApiSpec extends AsyncWordSpec with Matchers {
   var calledRequest: Option[HttpRequest] = None
 
   object TestRelationalDataApi {
-
     def apply(eConfig: EscherConfig)(
         implicit
         sys: ActorSystem,
         mat: Materializer,
         ex: ExecutionContextExecutor
     ): RelationalDataApi = {
-
       new RelationalDataApi {
         implicit override val system       = sys
         implicit override val materializer = mat
@@ -51,13 +50,10 @@ class RelationalDataApiSpec extends AsyncWordSpec with Matchers {
           super.runSigned(request, serviceName, headers, retryConfig)
         }
       }
-
     }
-
   }
 
   "RelationalDataApi " should {
-
     "send valid request to proper Uri" in {
       TestRelationalDataApi(escherConfig).insertIgnore(1, "animal", List.empty)
       calledRequest.get.uri.toString() should endWith("/tables/animal/records")
@@ -65,20 +61,18 @@ class RelationalDataApiSpec extends AsyncWordSpec with Matchers {
     }
 
     "send the payload with the request" in {
-
       val payload = Seq(
         Map(
           "cica"  -> JsString("cirmos"),
           "kutya" -> JsString("aaaa")
         )
       )
-      val expectedPayload = """[{"cica":"cirmos","kutya":"aaaa"}])"""
+      val expectedPayload = """[{"cica":"cirmos","kutya":"aaaa"}]"""
 
       TestRelationalDataApi(escherConfig).insertIgnore(1, "animal", payload)
 
-      calledRequest.get.entity.toString should endWith(expectedPayload)
+      val body = Await.result(Unmarshal(calledRequest.get.entity).to[String], Duration.Inf)
+      body should equal(expectedPayload)
     }
-
   }
-
 }
