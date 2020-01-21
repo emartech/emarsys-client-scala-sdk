@@ -5,7 +5,7 @@ crossScalaVersions := List("2.13.0", "2.12.10")
 scalacOptions := scalacOptionsFor(scalaVersion.value)
 
 libraryDependencies ++= {
-  val akkaHttpV  = "10.1.10"
+  val akkaHttpV  = "10.1.11"
   val scalaTestV = "3.0.8"
   Seq(
     "com.typesafe.akka"     %% "akka-http-core"       % akkaHttpV,
