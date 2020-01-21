@@ -31,7 +31,6 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
   }
 
   "#run" should {
-
     "return ok if everything is ok" in new Scope {
       override protected def sendRequest(request: HttpRequest): Future[HttpResponse] =
         Future.successful(HttpResponse(StatusCodes.OK, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
@@ -161,7 +160,6 @@ class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpe
     }
 
     "not retry after dontRetryAfter is elapsed" in new Scope {
-
       val retries = 4
       var counter = 0
 

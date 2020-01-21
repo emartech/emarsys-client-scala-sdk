@@ -14,7 +14,6 @@ import org.scalatest.{AsyncWordSpec, Matchers}
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
 class SegmentRunApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
-
   implicit val system       = ActorSystem("segment-run-api-test-system")
   implicit val materializer = ActorMaterializer()
   implicit val executor     = system.dispatcher
@@ -43,7 +42,6 @@ class SegmentRunApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
   val errorStartResponse = """{"replyCode":1008,"replyText":"error","data":""}"""
 
   "start" should {
-
     "return with run id and waiting status" when {
       "valid payload provided" in {
         segmentApi(StatusCodes.OK, validStartResponse)
@@ -78,7 +76,6 @@ class SegmentRunApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
   }
 
   "poll" should {
-
     "return with run id and waiting status" when {
       "segment is running" in {
         segmentApi(StatusCodes.OK, validStartResponse)
@@ -119,7 +116,6 @@ class SegmentRunApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
 }
 
 object TestSegmentRunApi {
-
   def apply(eConfig: EscherConfig, response: HttpResponse)(
       implicit
       sys: ActorSystem,
@@ -137,7 +133,6 @@ object TestSegmentRunApi {
 }
 
 object TestSegmentRunApiForceRenew {
-
   def apply(eConfig: EscherConfig, response: String)(
       implicit
       sys: ActorSystem,
@@ -167,7 +162,6 @@ object TestSegmentRunApiForceRenew {
 }
 
 object TestSegmentRunApiNoRenew {
-
   def apply(eConfig: EscherConfig, response: String)(
       implicit
       sys: ActorSystem,

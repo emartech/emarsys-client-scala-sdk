@@ -13,7 +13,6 @@ import org.scalatest.{AsyncWordSpec, Matchers}
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
 class SegmentApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
-
   implicit val system       = ActorSystem("segment-api-test-system")
   implicit val materializer = ActorMaterializer()
   implicit val executor     = system.dispatcher
@@ -21,7 +20,6 @@ class SegmentApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
   val escherConfig = new EscherConfig(ConfigFactory.load().getConfig("ems-api.escher"))
 
   object TestSegmentApi {
-
     def apply(eConfig: EscherConfig, response: HttpResponse)(
         implicit
         sys: ActorSystem,
@@ -44,10 +42,8 @@ class SegmentApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
   val customerId = 123
 
   "Segment Api" when {
-
     "create segment called vith valid payload" should {
       "return with valid response" in {
-
         val contactCriteriaLeaf  = ContactCriteriaLeaf("criteria", Right("email"), "contains", "@gmail.com")
         val behaviorCriteriaLeaf = BehaviorCriteriaLeaf("criteria")
         val payloadOneLeaf       = CreateRequest("segment", Some(contactCriteriaLeaf), Some(behaviorCriteriaLeaf), "", None)

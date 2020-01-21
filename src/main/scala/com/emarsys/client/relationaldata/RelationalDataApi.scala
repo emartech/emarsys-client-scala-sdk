@@ -16,7 +16,6 @@ import spray.json.JsValue
 import scala.concurrent.ExecutionContextExecutor
 
 trait RelationalDataApi extends EscherRestClient {
-
   val serviceName = relationalData.serviceName
   val baseUrl     = Uri(scheme = s"${relationalData.protocol}", authority = Authority(host = Host(relationalData.host))).toString + relationalData.basePath
   val retryConfig = defaultRetryConfig.copy(maxRetries = 0)
@@ -32,18 +31,15 @@ trait RelationalDataApi extends EscherRestClient {
 
     runSigned[String](request, serviceName, List(customerIdHeader), retryConfig)
   }
-
 }
 
 object RelationalDataApi {
-
   def apply(eConfig: EscherConfig)(
       implicit
       sys: ActorSystem,
       mat: Materializer,
       ex: ExecutionContextExecutor
   ): RelationalDataApi = {
-
     new RelationalDataApi {
       implicit override val system       = sys
       implicit override val materializer = mat
@@ -51,5 +47,4 @@ object RelationalDataApi {
       override val escherConfig          = eConfig
     }
   }
-
 }

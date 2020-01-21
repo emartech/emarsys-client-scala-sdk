@@ -12,7 +12,6 @@ import com.emarsys.escher.akka.http.config.EscherConfig
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
 trait SegmentApi extends SuiteClient {
-
   import SegmentApi._
   val retryConfig = defaultRetryConfig.copy(maxRetries = 0)
 
@@ -67,7 +66,6 @@ object SegmentApi {
       mat: Materializer,
       ex: ExecutionContextExecutor
   ): SegmentApi = {
-
     new SuiteClient with SegmentApi {
       implicit override val system       = sys
       implicit override val materializer = mat

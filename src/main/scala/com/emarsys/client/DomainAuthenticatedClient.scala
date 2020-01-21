@@ -9,7 +9,6 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
 trait DomainAuthenticatedClient extends EscherRestClient {
-
   val retryConfig = defaultRetryConfig.copy(maxRetries = 3)
 
   def send[S](request: HttpRequest): Future[HttpResponse] = {
@@ -44,7 +43,6 @@ object DomainAuthenticatedClient {
       mat: Materializer,
       ex: ExecutionContextExecutor
   ): DomainAuthenticatedClient = {
-
     new DomainAuthenticatedClient {
       implicit override val system: ActorSystem                = sys
       implicit override val materializer: Materializer         = mat

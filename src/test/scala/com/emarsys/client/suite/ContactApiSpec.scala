@@ -14,7 +14,6 @@ import org.scalatest.{AsyncWordSpec, Matchers}
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
 class ContactApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
-
   implicit val system       = ActorSystem("contact-api-test-system")
   implicit val materializer = ActorMaterializer()
   implicit val executor     = system.dispatcher
@@ -22,7 +21,6 @@ class ContactApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
   val escherConfig = new EscherConfig(ConfigFactory.load().getConfig("ems-api.escher"))
 
   object TestContactApi {
-
     def apply(
         eConfig: EscherConfig,
         response: HttpResponse
@@ -78,9 +76,7 @@ class ContactApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
                              |}""".stripMargin
 
   "Contact Api" when {
-
     "get data called" should {
-
       "return existing fields in case of successful response" in {
         contactApi(OK, validResponse).getData(customerId, GetDataRequest("id", Nil, None)) map { response =>
           response.data shouldEqual GetDataResult(
@@ -134,7 +130,6 @@ class ContactApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
           contactApi(OK, "[]").getData(customerId, GetDataRequest("id", Nil, None))
         }
       }
-
     }
   }
 

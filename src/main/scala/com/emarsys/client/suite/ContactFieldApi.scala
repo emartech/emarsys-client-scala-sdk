@@ -12,7 +12,6 @@ import com.emarsys.escher.akka.http.config.EscherConfig
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
 trait ContactFieldApi extends SuiteClient {
-
   import ContactFieldApi._
   val retryConfig = defaultRetryConfig.copy(maxRetries = 0)
 
@@ -56,7 +55,6 @@ trait ContactFieldApi extends SuiteClient {
 }
 
 object ContactFieldApi {
-
   final case class FieldItem(id: Int, name: Option[String], application_type: String, string_id: String)
   final case class ListResponse(data: List[FieldItem])
   type ListRawResponseData = Either[String, List[FieldItem]]

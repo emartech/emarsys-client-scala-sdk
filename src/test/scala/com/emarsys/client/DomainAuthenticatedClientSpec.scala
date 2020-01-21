@@ -11,7 +11,6 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class DomainAuthenticatedClientSpec extends WordSpecLike with Matchers {
-
   implicit val sys = ActorSystem("domain-based-rest-client-spec")
   implicit val mat = ActorMaterializer()
   implicit val exe = sys.dispatcher

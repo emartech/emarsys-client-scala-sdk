@@ -14,7 +14,6 @@ import org.joda.time.DateTime
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
 trait SegmentRegistryApi extends EscherRestClient {
-
   import SegmentRegistryApi._
 
   val serviceName: String = segmentRegistry.serviceName
@@ -65,7 +64,6 @@ trait SegmentRegistryApi extends EscherRestClient {
 }
 
 object SegmentRegistryApi {
-
   case class SegmentData(
       id: Int,
       name: String,

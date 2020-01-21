@@ -14,7 +14,6 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.Try
 
 trait EventApi extends SuiteClient {
-
   import EventApi._
 
   val retryConfig = defaultRetryConfig.copy(maxRetries = 0)
@@ -58,11 +57,9 @@ trait EventApi extends SuiteClient {
       .toList
       .flatten
   }
-
 }
 
 object EventApi {
-
   case class BatchTriggerResponseDataEmptyErrors(errors: List[String])
   case class BatchTriggerResponseData(errors: Option[Map[String, Map[String, String]]])
   implicit val batchTriggerResponseDataFormat = jsonFormat1(BatchTriggerResponseData)
@@ -95,7 +92,6 @@ object EventApi {
       mat: Materializer,
       ex: ExecutionContextExecutor
   ): EventApi = {
-
     new EventApi {
       implicit override val system       = sys
       implicit override val materializer = mat

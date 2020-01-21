@@ -25,7 +25,6 @@ class SegmentRegistryApiSpec
     with ScalaFutures
     with SegmentRegistryApi
     with BeforeAndAfterAll {
-
   implicit val system          = ActorSystem("segment-registry-api-test-system")
   implicit val materializer    = ActorMaterializer()
   implicit val executor        = system.dispatcher
@@ -74,9 +73,7 @@ class SegmentRegistryApiSpec
   )
 
   "SegmentRegistryApi" should {
-
     "update responds with segment record" when {
-
       "proper segment data is sent" in {
         update(customerId, segmentData).map {
           _ shouldEqual validResponse
@@ -91,7 +88,6 @@ class SegmentRegistryApiSpec
     }
 
     "update returns failed future" when {
-
       "response code is invalid" in {
         recoverToSucceededIf[RestClientException] {
           update(invalidResponseCodeCustomerId, segmentData)
@@ -108,7 +104,6 @@ class SegmentRegistryApiSpec
     }
 
     "update by registry id responds with segment record" when {
-
       "proper segment data is sent" in {
         updateByRegistryId(customerId, segmentData).map {
           _ shouldEqual validResponse
@@ -123,7 +118,6 @@ class SegmentRegistryApiSpec
     }
 
     "update by registry id returns failed future" when {
-
       "response code is invalid" in {
         recoverToSucceededIf[RestClientException] {
           updateByRegistryId(invalidResponseCodeCustomerId, segmentData)
@@ -138,7 +132,6 @@ class SegmentRegistryApiSpec
     }
 
     "create responds with segment record" when {
-
       "proper segment data is sent" in {
         create(customerId, segmentCreatePayload.copy(id = Some(createSegmentId))).map {
           _ shouldEqual validResponse
@@ -153,7 +146,6 @@ class SegmentRegistryApiSpec
     }
 
     "create returns failed future" when {
-
       "response code is invalid" in {
         recoverToSucceededIf[RestClientException] {
           create(customerId, segmentCreatePayload)
@@ -320,5 +312,4 @@ class SegmentRegistryApiSpec
   }
 
   val validPath = (u: Uri) => u.path.toString endsWith _
-
 }

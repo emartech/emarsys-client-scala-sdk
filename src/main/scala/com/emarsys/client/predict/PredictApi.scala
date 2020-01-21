@@ -17,7 +17,6 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success, Try}
 
 trait PredictApi extends RestClient {
-
   import PredictApi._
 
   val retryConfig = defaultRetryConfig.copy(maxRetries = 0)
@@ -75,7 +74,6 @@ trait PredictApi extends RestClient {
 }
 
 object PredictApi {
-
   type RawProducts = Map[String, JsObject]
   final case class RecommendationResponse(products: RawProducts)
 

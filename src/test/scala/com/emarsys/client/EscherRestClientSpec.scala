@@ -41,7 +41,6 @@ class EscherRestClientSpec
       requests :+= request
       Future.successful(HttpResponse(StatusCodes.OK, Nil, HttpEntity(ContentTypes.`application/json`, "{}")))
     }
-
   }
 
   "#runSigned" should {

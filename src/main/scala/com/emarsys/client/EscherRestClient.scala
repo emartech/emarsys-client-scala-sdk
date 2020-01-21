@@ -14,7 +14,6 @@ import spray.json.DeserializationException
 import scala.concurrent.Future
 
 trait EscherRestClient extends RestClient with EscherDirectives {
-
   def runStreamSigned(
       request: HttpRequest,
       serviceName: String,
@@ -57,5 +56,4 @@ trait EscherRestClient extends RestClient with EscherDirectives {
       response <- runRaw(signed, retryConfig)
     } yield response
   }
-
 }

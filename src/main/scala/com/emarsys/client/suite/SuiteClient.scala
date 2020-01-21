@@ -10,7 +10,6 @@ import com.emarsys.client.EscherRestClient
 import scala.concurrent.Future
 
 trait SuiteClient extends EscherRestClient {
-
   import SuiteClient._
 
   val serviceName = suite.serviceName

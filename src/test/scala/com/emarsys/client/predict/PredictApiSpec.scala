@@ -17,7 +17,6 @@ import org.scalatest.{AsyncWordSpec, Matchers}
 import scala.concurrent.Future
 
 class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with PredictApi {
-
   implicit val system          = ActorSystem("predict-api-test-system")
   implicit val materializer    = ActorMaterializer()
   implicit val executor        = system.dispatcher
@@ -66,11 +65,8 @@ class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with 
   val invalidProduct = """{"2129": {}}"""
 
   "Predict Api" when {
-
     "recommendation called" should {
-
       "return failed future in case of invalid response" which {
-
         "is invalid json" in {
           recoverToSucceededIf[Exception] {
             recommendations("invalidJsonResponse", Some(PredictIdentityHash(emailHash, secret)))
@@ -144,7 +140,6 @@ class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with 
     }
 
     "load product called" should {
-
       "return product object if item found" in {
         loadProduct("validProduct", "[itemId]") map { response =>
           response.get shouldEqual Recommendation(

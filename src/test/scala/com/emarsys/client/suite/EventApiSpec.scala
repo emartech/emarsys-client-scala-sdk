@@ -23,7 +23,6 @@ import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.util.Try
 
 class EventApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
-
   implicit val system       = ActorSystem("event-api-test-system")
   implicit val materializer = ActorMaterializer()
   implicit val executor     = system.dispatcher
@@ -33,7 +32,6 @@ class EventApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
   val customerId = 123
 
   object TestEventApi {
-
     def apply(eConfig: EscherConfig, path: String, data: String, response: HttpResponse)(
         implicit sys: ActorSystem,
         mat: Materializer,
@@ -82,9 +80,7 @@ class EventApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
   val path       = s"event/$eventId/trigger"
 
   "Event Api" when {
-
     "trigger called" should {
-
       "without data return successful" in {
         val requestData = s"""{"key_id":"$keyId","external_id":"$externalId"}"""
 
@@ -126,7 +122,6 @@ class EventApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
     }
 
     "batch trigger called" should {
-
       val data = JsObject("hello" -> JsBoolean(true))
 
       "return successful response when data errors is an array" in {
@@ -201,7 +196,6 @@ class EventApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
       }
 
       "return error if the request fails" in {
-
         val requestData = s"""{"key_id":"$keyId","contacts":[{"external_id":"$externalId","data":{"hello":true}}]}"""
         val triggerData = ExternalEventTriggerBatch(
           keyId,
@@ -214,9 +208,7 @@ class EventApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
           eventApi(path, requestData, BadRequest, errorResponse).triggerBatch(customerId, eventId, triggerData)
         }
       }
-
     }
-
   }
 
   def eventApi(requestPath: String, requestData: String, httpStatus: StatusCode, response: String) = {

@@ -12,7 +12,6 @@ import com.emarsys.formats.SuiteSdkFormats._
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
 trait SegmentRunApi extends SuiteClient {
-
   import SegmentRunApi._
   val retryConfig = defaultRetryConfig.copy(maxRetries = 0)
 
@@ -44,7 +43,6 @@ trait SegmentRunApi extends SuiteClient {
 }
 
 object SegmentRunApi {
-
   final case class SegmentRunResultRaw(run_id: String, status: String, result: Option[ContactListDetailsRaw])
   final case class ContactListDetailsRaw(contact_list_id: Int, user_count: Int, opt_in_count: Int, duration: Int)
 
@@ -57,7 +55,6 @@ object SegmentRunApi {
       mat: Materializer,
       ex: ExecutionContextExecutor
   ): SegmentRunApi = {
-
     new SuiteClient with SegmentRunApi {
       implicit override val system       = sys
       implicit override val materializer = mat

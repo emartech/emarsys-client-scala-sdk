@@ -23,14 +23,12 @@ trait ContactApi extends SuiteClient {
 }
 
 object ContactApi {
-
   def apply(eConfig: EscherConfig)(
       implicit
       sys: ActorSystem,
       mat: Materializer,
       ex: ExecutionContextExecutor
   ): ContactApi = {
-
     new SuiteClient with ContactApi {
       implicit override val system       = sys
       implicit override val materializer = mat

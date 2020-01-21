@@ -8,11 +8,9 @@ import spray.json._
 import scala.util.control.NonFatal
 
 object SegmentRegistryFormats extends DefaultJsonProtocol {
-
   val dateTimePattern = "yyyy-MM-dd HH:mm:ss"
 
   implicit def jodaDateTimeFormat: JsonFormat[DateTime] = new JsonFormat[DateTime] {
-
     def write(obj: DateTime): JsValue = JsString(obj.toDateTime(DateTimeZone.UTC).toString(dateTimePattern))
 
     def read(json: JsValue): DateTime = json match {
