@@ -55,9 +55,10 @@ class RelationalDataApiSpec extends AsyncWordSpec with Matchers {
 
   "RelationalDataApi " should {
     "send valid request to proper Uri" in {
-      TestRelationalDataApi(escherConfig).insertIgnore(1, "animal", List.empty)
+      TestRelationalDataApi(escherConfig).insertIgnore(1, "animal", List.empty, Some("pubsub"))
       calledRequest.get.uri.toString() should endWith("/tables/animal/records")
       calledRequest.get.getHeader("x-suite-customerid") should equal(Optional.of(RawHeader("x-suite-customerid", "1")))
+      calledRequest.get.getHeader("X-Forwarded-Service") should equal(Optional.of(RawHeader("X-Forwarded-Service", "pubsub")))
     }
 
     "send the payload with the request" in {
@@ -69,7 +70,7 @@ class RelationalDataApiSpec extends AsyncWordSpec with Matchers {
       )
       val expectedPayload = """[{"cica":"cirmos","kutya":"aaaa"}]"""
 
-      TestRelationalDataApi(escherConfig).insertIgnore(1, "animal", payload)
+      TestRelationalDataApi(escherConfig).insertIgnore(1, "animal", payload, None)
 
       val body = Await.result(Unmarshal(calledRequest.get.entity).to[String], Duration.Inf)
       body should equal(expectedPayload)

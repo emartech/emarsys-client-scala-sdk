@@ -21,13 +21,15 @@ trait RelationalDataApi extends EscherRestClient {
   val retryConfig = defaultRetryConfig.copy(maxRetries = 0)
 
   final val customerIdHeader = "x-suite-customerid"
+  final val forwardedServiceHeader = "X-Forwarded-Service"
 
-  def insertIgnore(customerId: Int, tableName: String, payload: Seq[Map[String, JsValue]]) = {
+  def insertIgnore(customerId: Int, tableName: String, payload: Seq[Map[String, JsValue]], source: Option[String]) = {
     val path: String = s"/tables/$tableName/records"
 
-    val request = RequestBuilding
+    var request = RequestBuilding
       .Post(baseUrl + path, payload)
       .addHeader(RawHeader(customerIdHeader, customerId.toString))
+    source.foreach(serv => request = request.addHeader(RawHeader(forwardedServiceHeader, serv)))
 
     runSigned[String](request, serviceName, List(customerIdHeader), retryConfig)
   }
