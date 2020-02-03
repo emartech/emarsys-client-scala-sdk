@@ -20,7 +20,7 @@ trait RelationalDataApi extends EscherRestClient {
   val baseUrl     = Uri(scheme = s"${relationalData.protocol}", authority = Authority(host = Host(relationalData.host))).toString + relationalData.basePath
   val retryConfig = defaultRetryConfig.copy(maxRetries = 0)
 
-  final val customerIdHeader = "x-suite-customerid"
+  final val customerIdHeader       = "x-suite-customerid"
   final val forwardedServiceHeader = "X-Forwarded-Service"
 
   def insertIgnore(customerId: Int, tableName: String, payload: Seq[Map[String, JsValue]], source: Option[String]) = {
