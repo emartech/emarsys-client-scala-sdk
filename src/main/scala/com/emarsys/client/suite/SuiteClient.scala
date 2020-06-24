@@ -17,7 +17,7 @@ trait SuiteClient extends EscherRestClient {
   protected def createCustomerHeader(customerId: Int) = RawHeader("X-SUITE-CUSTOMERID", customerId.toString)
 
   def baseUrl(customerId: Int) =
-    s"${suite.protocol}://${suite.host}${suite.apiPath}/$customerId/"
+    s"${suite.protocol}://${suite.host}:${suite.port}${suite.apiPath}/$customerId/"
 
   def runSuiteRequest[S](
       request: HttpRequest,
