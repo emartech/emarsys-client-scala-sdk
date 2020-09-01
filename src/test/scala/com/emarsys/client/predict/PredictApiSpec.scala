@@ -12,9 +12,10 @@ import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
-import org.scalatest.{AsyncWordSpec, Matchers}
 
 import scala.concurrent.Future
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AsyncWordSpec
 
 class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with PredictApi {
   implicit val system          = ActorSystem("predict-api-test-system")

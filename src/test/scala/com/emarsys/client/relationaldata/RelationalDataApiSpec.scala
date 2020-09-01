@@ -10,11 +10,12 @@ import akka.stream.{ActorMaterializer, Materializer}
 import com.emarsys.client.Config.RetryConfig
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory
-import org.scalatest.{AsyncWordSpec, Matchers}
 import spray.json.JsString
 
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.concurrent.duration.Duration
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AsyncWordSpec
 
 class RelationalDataApiSpec extends AsyncWordSpec with Matchers {
   implicit val system       = ActorSystem("relational-data-api-test-system")

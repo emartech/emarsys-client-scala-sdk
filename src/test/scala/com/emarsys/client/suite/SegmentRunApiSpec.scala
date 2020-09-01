@@ -9,9 +9,10 @@ import com.emarsys.client.suite.SegmentRunApi.{ContactListDetails, SegmentRunRes
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{AsyncWordSpec, Matchers}
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AsyncWordSpec
 
 class SegmentRunApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
   implicit val system       = ActorSystem("segment-run-api-test-system")

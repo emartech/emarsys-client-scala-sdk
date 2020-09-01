@@ -9,13 +9,14 @@ import com.emarsys.client
 import com.emarsys.client.Config.RetryConfig
 import com.emarsys.client.RestClientErrors.RestClientException
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{Matchers, WordSpecLike}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.util.{Failure, Try}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
-class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpecLike with Matchers with ScalaFutures {
+class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with AnyWordSpecLike with Matchers with ScalaFutures {
   self =>
 
   implicit val mat = ActorMaterializer()
