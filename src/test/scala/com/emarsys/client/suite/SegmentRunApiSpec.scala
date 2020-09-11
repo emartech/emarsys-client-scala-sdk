@@ -115,8 +115,7 @@ class SegmentRunApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
 }
 
 object TestSegmentRunApi {
-  def apply(eConfig: EscherConfig, response: HttpResponse)(
-      implicit
+  def apply(eConfig: EscherConfig, response: HttpResponse)(implicit
       sys: ActorSystem,
       ex: ExecutionContextExecutor
   ) =
@@ -130,8 +129,7 @@ object TestSegmentRunApi {
 }
 
 object TestSegmentRunApiForceRenew {
-  def apply(eConfig: EscherConfig, response: String)(
-      implicit
+  def apply(eConfig: EscherConfig, response: String)(implicit
       sys: ActorSystem,
       ex: ExecutionContextExecutor
   ) =
@@ -157,8 +155,7 @@ object TestSegmentRunApiForceRenew {
 }
 
 object TestSegmentRunApiNoRenew {
-  def apply(eConfig: EscherConfig, response: String)(
-      implicit
+  def apply(eConfig: EscherConfig, response: String)(implicit
       sys: ActorSystem,
       ex: ExecutionContextExecutor
   ) =

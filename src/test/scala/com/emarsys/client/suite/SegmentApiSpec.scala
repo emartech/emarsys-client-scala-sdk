@@ -19,8 +19,7 @@ class SegmentApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
   val escherConfig = new EscherConfig(ConfigFactory.load().getConfig("ems-api.escher"))
 
   object TestSegmentApi {
-    def apply(eConfig: EscherConfig, response: HttpResponse)(
-        implicit
+    def apply(eConfig: EscherConfig, response: HttpResponse)(implicit
         sys: ActorSystem,
         ex: ExecutionContextExecutor
     ) =

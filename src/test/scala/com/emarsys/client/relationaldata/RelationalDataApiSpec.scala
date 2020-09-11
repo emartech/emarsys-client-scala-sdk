@@ -25,8 +25,7 @@ class RelationalDataApiSpec extends AsyncWordSpec with Matchers {
   var calledRequest: Option[HttpRequest] = None
 
   object TestRelationalDataApi {
-    def apply(eConfig: EscherConfig)(
-        implicit
+    def apply(eConfig: EscherConfig)(implicit
         sys: ActorSystem,
         ex: ExecutionContextExecutor
     ): RelationalDataApi = {
@@ -40,8 +39,8 @@ class RelationalDataApiSpec extends AsyncWordSpec with Matchers {
             serviceName: String,
             headers: List[String],
             retryConfig: RetryConfig
-        )(
-            implicit um: Unmarshaller[ResponseEntity, S]
+        )(implicit
+            um: Unmarshaller[ResponseEntity, S]
         ): Future[S] = {
           calledRequest = Some(request)
           super.runSigned(request, serviceName, headers, retryConfig)

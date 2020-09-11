@@ -31,8 +31,8 @@ class EventApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
   val customerId = 123
 
   object TestEventApi {
-    def apply(eConfig: EscherConfig, path: String, data: String, response: HttpResponse)(
-        implicit sys: ActorSystem,
+    def apply(eConfig: EscherConfig, path: String, data: String, response: HttpResponse)(implicit
+        sys: ActorSystem,
         ex: ExecutionContextExecutor
     ) =
       new SuiteClient with EventApi {

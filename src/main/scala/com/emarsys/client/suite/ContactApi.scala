@@ -22,8 +22,7 @@ trait ContactApi extends SuiteClient {
 }
 
 object ContactApi {
-  def apply(eConfig: EscherConfig)(
-      implicit
+  def apply(eConfig: EscherConfig)(implicit
       sys: ActorSystem,
       ex: ExecutionContextExecutor
   ): ContactApi = {

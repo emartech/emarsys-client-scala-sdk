@@ -82,8 +82,7 @@ object PredictApi {
 
   final case class Recommendation(title: String, image: Option[String])
 
-  def apply(eConfig: EscherConfig)(
-      implicit
+  def apply(eConfig: EscherConfig)(implicit
       sys: ActorSystem,
       ex: ExecutionContextExecutor
   ): PredictApi =

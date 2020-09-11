@@ -95,8 +95,7 @@ object SegmentRegistryApi {
       predefined: Boolean
   )
 
-  def apply(eConfig: EscherConfig)(
-      implicit
+  def apply(eConfig: EscherConfig)(implicit
       sys: ActorSystem,
       ex: ExecutionContextExecutor
   ): SegmentRegistryApi =
