@@ -1,6 +1,6 @@
 organization := "com.emarsys"
 name := "emarsys-client-scala-sdk"
-crossScalaVersions := List("2.13.0", "2.12.10")
+crossScalaVersions := List("2.13.3", "2.12.12")
 
 scalacOptions := scalacOptionsFor(scalaVersion.value)
 
@@ -22,7 +22,7 @@ libraryDependencies ++= {
   )
 }
 
-addCompilerPlugin("io.tryp" % "splain" % "0.4.1" cross CrossVersion.patch)
+addCompilerPlugin("io.tryp" % "splain" % "0.5.7" cross CrossVersion.patch)
 
 scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
 
