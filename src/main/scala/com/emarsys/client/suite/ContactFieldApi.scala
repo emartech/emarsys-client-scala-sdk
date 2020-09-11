@@ -3,7 +3,6 @@ package com.emarsys.client.suite
 import akka.actor.ActorSystem
 import akka.http.scaladsl.client.RequestBuilding
 import akka.http.scaladsl.model._
-import akka.stream.Materializer
 import com.emarsys.formats.SuiteSdkFormats._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import com.emarsys.client.suite.SuiteClient.SuiteRawResponse
@@ -62,10 +61,9 @@ object ContactFieldApi {
   final case class CreateFieldRequest(name: String, application_type: String, string_id: Option[String])
   final case class CreateFieldResponse(id: Int)
 
-  def apply(eConfig: EscherConfig)(implicit sys: ActorSystem, mat: Materializer, ex: ExecutionContextExecutor) =
+  def apply(eConfig: EscherConfig)(implicit sys: ActorSystem, ex: ExecutionContextExecutor) =
     new SuiteClient with ContactFieldApi {
       implicit override val system       = sys
-      implicit override val materializer = mat
       implicit override val executor     = ex
       override val escherConfig          = eConfig
     }

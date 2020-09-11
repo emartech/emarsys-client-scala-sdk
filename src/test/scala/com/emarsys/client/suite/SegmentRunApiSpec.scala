@@ -3,19 +3,18 @@ package com.emarsys.client.suite
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes.{InternalServerError, OK}
 import akka.http.scaladsl.model._
-import akka.stream.{ActorMaterializer, Materializer}
 import com.emarsys.client.RestClientErrors.RestClientException
 import com.emarsys.client.suite.SegmentRunApi.{ContactListDetails, SegmentRunResult}
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{AsyncWordSpec, Matchers}
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AsyncWordSpec
 
 class SegmentRunApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
   implicit val system       = ActorSystem("segment-run-api-test-system")
-  implicit val materializer = ActorMaterializer()
   implicit val executor     = system.dispatcher
 
   val escherConfig       = new EscherConfig(ConfigFactory.load().getConfig("ems-api.escher"))
@@ -119,12 +118,10 @@ object TestSegmentRunApi {
   def apply(eConfig: EscherConfig, response: HttpResponse)(
       implicit
       sys: ActorSystem,
-      mat: Materializer,
       ex: ExecutionContextExecutor
   ) =
     new SuiteClient with SegmentRunApi {
       implicit override val system       = sys
-      implicit override val materializer = mat
       implicit override val executor     = ex
       override val escherConfig          = eConfig
 
@@ -136,12 +133,10 @@ object TestSegmentRunApiForceRenew {
   def apply(eConfig: EscherConfig, response: String)(
       implicit
       sys: ActorSystem,
-      mat: Materializer,
       ex: ExecutionContextExecutor
   ) =
     new SuiteClient with SegmentRunApi {
       implicit override val system       = sys
-      implicit override val materializer = mat
       implicit override val executor     = ex
       override val escherConfig          = eConfig
 
@@ -165,12 +160,10 @@ object TestSegmentRunApiNoRenew {
   def apply(eConfig: EscherConfig, response: String)(
       implicit
       sys: ActorSystem,
-      mat: Materializer,
       ex: ExecutionContextExecutor
   ) =
     new SuiteClient with SegmentRunApi {
       implicit override val system       = sys
-      implicit override val materializer = mat
       implicit override val executor     = ex
       override val escherConfig          = eConfig
 

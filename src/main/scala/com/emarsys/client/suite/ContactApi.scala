@@ -3,7 +3,6 @@ package com.emarsys.client.suite
 import akka.actor.ActorSystem
 import akka.http.scaladsl.client.RequestBuilding
 import akka.http.scaladsl.model._
-import akka.stream.Materializer
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import com.emarsys.formats.SuiteSdkFormats._
 import com.emarsys.escher.akka.http.config.EscherConfig
@@ -26,12 +25,10 @@ object ContactApi {
   def apply(eConfig: EscherConfig)(
       implicit
       sys: ActorSystem,
-      mat: Materializer,
       ex: ExecutionContextExecutor
   ): ContactApi = {
     new SuiteClient with ContactApi {
       implicit override val system       = sys
-      implicit override val materializer = mat
       implicit override val executor     = ex
       override val escherConfig          = eConfig
     }

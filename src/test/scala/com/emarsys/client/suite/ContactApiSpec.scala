@@ -3,19 +3,18 @@ package com.emarsys.client.suite
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
-import akka.stream.{ActorMaterializer, Materializer}
 import com.emarsys.client.RestClientErrors.{InvalidResponseFormatException, RestClientException}
 import com.emarsys.client.suite.DataTransformers._
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{AsyncWordSpec, Matchers}
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AsyncWordSpec
 
 class ContactApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
   implicit val system       = ActorSystem("contact-api-test-system")
-  implicit val materializer = ActorMaterializer()
   implicit val executor     = system.dispatcher
 
   val escherConfig = new EscherConfig(ConfigFactory.load().getConfig("ems-api.escher"))
@@ -24,10 +23,9 @@ class ContactApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
     def apply(
         eConfig: EscherConfig,
         response: HttpResponse
-    )(implicit sys: ActorSystem, mat: Materializer, ex: ExecutionContextExecutor) =
+    )(implicit sys: ActorSystem, ex: ExecutionContextExecutor) =
       new SuiteClient with ContactApi {
         implicit override val system       = sys
-        implicit override val materializer = mat
         implicit override val executor     = ex
         override val escherConfig          = eConfig
 

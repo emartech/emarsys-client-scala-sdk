@@ -3,28 +3,27 @@ package com.emarsys.client
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
 import akka.stream.scaladsl.{Sink, TcpIdleTimeoutException}
-import akka.stream.{ActorMaterializer, BufferOverflowException, Materializer, StreamTcpException}
+import akka.stream.{BufferOverflowException, StreamTcpException}
 import akka.testkit.TestKit
 import com.emarsys.client
 import com.emarsys.client.Config.RetryConfig
 import com.emarsys.client.RestClientErrors.RestClientException
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{Matchers, WordSpecLike}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.util.{Failure, Try}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
-class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with WordSpecLike with Matchers with ScalaFutures {
+class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with AnyWordSpecLike with Matchers with ScalaFutures {
   self =>
 
-  implicit val mat = ActorMaterializer()
   val timeout      = 3.seconds
   val url          = "http://test.example.com/testEndpoint"
 
   trait Scope extends RestClient {
     implicit override val system: ActorSystem                = self.system
-    implicit override val materializer: Materializer         = mat
     implicit override val executor: ExecutionContextExecutor = self.system.dispatcher
     override val defaultRetryConfig: RetryConfig =
       RetryConfig(maxRetries = 3, dontRetryAfter = 1.second, initialRetryDelay = 10.millis)

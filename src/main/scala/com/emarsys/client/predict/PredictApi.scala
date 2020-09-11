@@ -6,7 +6,6 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.client.RequestBuilding
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model._
-import akka.stream.Materializer
 import com.emarsys.client.Config.emsApi.predict
 import com.emarsys.client.RestClient
 import com.emarsys.formats.PredictFormats._
@@ -86,12 +85,10 @@ object PredictApi {
   def apply(eConfig: EscherConfig)(
       implicit
       sys: ActorSystem,
-      mat: Materializer,
       ex: ExecutionContextExecutor
   ): PredictApi =
     new RestClient with PredictApi {
       implicit override val system: ActorSystem                = sys
-      implicit override val materializer: Materializer         = mat
       implicit override val executor: ExecutionContextExecutor = ex
     }
 }

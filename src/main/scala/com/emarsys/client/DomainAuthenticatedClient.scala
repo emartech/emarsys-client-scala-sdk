@@ -1,7 +1,6 @@
 package com.emarsys.client
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse, Uri}
-import akka.stream.Materializer
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigException
 
@@ -40,12 +39,10 @@ object DomainAuthenticatedClient {
   def apply(eConfig: EscherConfig)(
       implicit
       sys: ActorSystem,
-      mat: Materializer,
       ex: ExecutionContextExecutor
   ): DomainAuthenticatedClient = {
     new DomainAuthenticatedClient {
       implicit override val system: ActorSystem                = sys
-      implicit override val materializer: Materializer         = mat
       implicit override val executor: ExecutionContextExecutor = ex
       override val escherConfig: EscherConfig                  = eConfig
     }

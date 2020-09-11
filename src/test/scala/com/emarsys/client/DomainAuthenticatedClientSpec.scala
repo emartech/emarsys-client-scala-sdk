@@ -2,22 +2,20 @@ package com.emarsys.client
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
-import akka.stream.ActorMaterializer
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory
-import org.scalatest.{Matchers, WordSpecLike}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
-class DomainAuthenticatedClientSpec extends WordSpecLike with Matchers {
+class DomainAuthenticatedClientSpec extends AnyWordSpecLike with Matchers {
   implicit val sys = ActorSystem("domain-based-rest-client-spec")
-  implicit val mat = ActorMaterializer()
   implicit val exe = sys.dispatcher
 
   trait Scope extends DomainAuthenticatedClient {
     override val system       = sys
-    override val materializer = mat
     override val executor     = exe
 
     override val escherConfig = new EscherConfig(ConfigFactory.load().getConfig("ems-api.escher"))

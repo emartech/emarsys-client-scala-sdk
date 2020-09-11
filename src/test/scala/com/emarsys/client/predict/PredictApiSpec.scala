@@ -5,20 +5,19 @@ import java.net.URLEncoder
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
-import akka.stream.ActorMaterializer
 import com.emarsys.client.RestClientErrors.RestClientException
 import com.emarsys.client.predict.PredictApi.{PredictIdentityAuth, PredictIdentityHash, Recommendation}
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
-import org.scalatest.{AsyncWordSpec, Matchers}
 
 import scala.concurrent.Future
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AsyncWordSpec
 
 class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with PredictApi {
   implicit val system          = ActorSystem("predict-api-test-system")
-  implicit val materializer    = ActorMaterializer()
   implicit val executor        = system.dispatcher
   implicit val defaultPatience = PatienceConfig(timeout = Span(2, Seconds), interval = Span(100, Millis))
 
@@ -227,6 +226,6 @@ class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with 
   }
 
   val validLoadProductUri = (u: Uri) => {
-    u.rawQueryString.fold(false)(_ == "v=i:[itemId]") && validHost(u)
+    u.rawQueryString.fold(false)(_ == s"v=i:${URLEncoder.encode("[itemId]", "UTF-8")}") && validHost(u)
   }
 }

@@ -3,20 +3,21 @@ package com.emarsys.client
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
 import akka.stream.scaladsl.Sink
-import akka.stream.{ActorMaterializer, Materializer}
 import akka.testkit.TestKit
 import com.emarsys.client.Config.RetryConfig
 import com.emarsys.escher.akka.http.config.EscherConfig
 import com.typesafe.config.ConfigFactory
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{Matchers, OptionValues, WordSpecLike}
+import org.scalatest.OptionValues
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
 class EscherRestClientSpec
     extends TestKit(ActorSystem("RestClientSpec"))
-    with WordSpecLike
+    with AnyWordSpecLike
     with Matchers
     with ScalaFutures
     with OptionValues {
@@ -30,7 +31,6 @@ class EscherRestClientSpec
 
   trait Scope extends EscherRestClient {
     implicit override val system: ActorSystem                = self.system
-    implicit override val materializer: Materializer         = ActorMaterializer()
     implicit override val executor: ExecutionContextExecutor = self.system.dispatcher
     override val defaultRetryConfig: RetryConfig =
       RetryConfig(maxRetries = 3, dontRetryAfter = 1.second, initialRetryDelay = 10.millis)

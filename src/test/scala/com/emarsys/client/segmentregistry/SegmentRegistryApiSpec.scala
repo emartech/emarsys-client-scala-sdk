@@ -5,7 +5,6 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes.OK
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
-import akka.stream.ActorMaterializer
 import com.emarsys.client.RestClientErrors.{InvalidResponseFormatException, RestClientException}
 import com.emarsys.client.segmentregistry.SegmentRegistryApi.{SegmentCreatePayload, SegmentData, SegmentRegistryRecord}
 import com.emarsys.escher.akka.http.config.EscherConfig
@@ -14,10 +13,12 @@ import com.typesafe.config.ConfigFactory
 import org.joda.time.{DateTime, DateTimeZone}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
-import org.scalatest.{AsyncWordSpec, BeforeAndAfterAll, Matchers}
+import org.scalatest.BeforeAndAfterAll
 import spray.json._
 
 import scala.concurrent.Future
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AsyncWordSpec
 
 class SegmentRegistryApiSpec
     extends AsyncWordSpec
@@ -26,7 +27,6 @@ class SegmentRegistryApiSpec
     with SegmentRegistryApi
     with BeforeAndAfterAll {
   implicit val system          = ActorSystem("segment-registry-api-test-system")
-  implicit val materializer    = ActorMaterializer()
   implicit val executor        = system.dispatcher
   implicit val defaultPatience = PatienceConfig(timeout = Span(2, Seconds), interval = Span(100, Millis))
 

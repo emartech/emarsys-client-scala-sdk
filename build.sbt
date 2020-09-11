@@ -5,9 +5,9 @@ crossScalaVersions := List("2.13.0", "2.12.10")
 scalacOptions := scalacOptionsFor(scalaVersion.value)
 
 libraryDependencies ++= {
-  val akkaHttpV  = "10.1.11"
-  val akkaV      = "2.5.31"
-  val scalaTestV = "3.0.8"
+  val akkaHttpV  = "10.2.0"
+  val akkaV      = "2.6.9"
+  val scalaTestV = "3.2.2"
   Seq(
     "com.typesafe.akka"     %% "akka-http-core"       % akkaHttpV,
     "com.typesafe.akka"     %% "akka-http"            % akkaHttpV,
@@ -15,10 +15,10 @@ libraryDependencies ++= {
     "com.typesafe.akka"     %% "akka-http-testkit"    % akkaHttpV % Test,
     "com.typesafe.akka"     %% "akka-stream-testkit"  % akkaV % Test,
     "org.scalatest"         %% "scalatest"            % scalaTestV % Test,
-    "com.emarsys"           %% "escher-akka-http"     % "1.2.0",
+    "com.emarsys"           %% "escher-akka-http"     % "1.3.1",
     "joda-time"             % "joda-time"             % "2.10.6",
     "org.joda"              % "joda-convert"          % "2.2.1",
-    "com.github.pureconfig" %% "pureconfig"           % "0.12.1"
+    "com.github.pureconfig" %% "pureconfig"           % "0.13.0"
   )
 }
 

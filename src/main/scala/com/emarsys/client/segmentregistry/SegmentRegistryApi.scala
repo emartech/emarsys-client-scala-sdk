@@ -4,7 +4,6 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.client.RequestBuilding
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.Uri
-import akka.stream.Materializer
 import com.emarsys.client.Config.emsApi.segmentRegistry
 import com.emarsys.client.{EscherRestClient, RestClient}
 import com.emarsys.escher.akka.http.config.EscherConfig
@@ -99,12 +98,10 @@ object SegmentRegistryApi {
   def apply(eConfig: EscherConfig)(
       implicit
       sys: ActorSystem,
-      mat: Materializer,
       ex: ExecutionContextExecutor
   ): SegmentRegistryApi =
     new RestClient with SegmentRegistryApi {
       implicit override val system: ActorSystem                = sys
-      implicit override val materializer: Materializer         = mat
       implicit override val executor: ExecutionContextExecutor = ex
       override val escherConfig: EscherConfig                  = eConfig
     }

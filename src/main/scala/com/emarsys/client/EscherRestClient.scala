@@ -21,7 +21,7 @@ trait EscherRestClient extends RestClient with EscherDirectives {
       retryConfig: RetryConfig = defaultRetryConfig
   ): Source[ByteString, NotUsed] = {
     Source
-      .fromFuture(runSigned[ResponseEntity](request, serviceName, headers, retryConfig).map(_.dataBytes))
+      .future(runSigned[ResponseEntity](request, serviceName, headers, retryConfig).map(_.dataBytes))
       .flatMapConcat(identity)
   }
 

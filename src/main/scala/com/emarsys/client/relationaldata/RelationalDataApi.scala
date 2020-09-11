@@ -6,7 +6,6 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.Uri
 import akka.http.scaladsl.model.Uri.{Authority, Host}
 import akka.http.scaladsl.model.headers.RawHeader
-import akka.stream.Materializer
 import com.emarsys.client.Config.emsApi.relationalData
 import com.emarsys.client.EscherRestClient
 import com.emarsys.escher.akka.http.config.EscherConfig
@@ -39,12 +38,10 @@ object RelationalDataApi {
   def apply(eConfig: EscherConfig)(
       implicit
       sys: ActorSystem,
-      mat: Materializer,
       ex: ExecutionContextExecutor
   ): RelationalDataApi = {
     new RelationalDataApi {
       implicit override val system       = sys
-      implicit override val materializer = mat
       implicit override val executor     = ex
       override val escherConfig          = eConfig
     }

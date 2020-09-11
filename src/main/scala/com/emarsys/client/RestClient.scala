@@ -23,7 +23,7 @@ trait RestClient {
   import RestClientErrors._
 
   implicit val system: ActorSystem
-  implicit val materializer: Materializer
+  lazy val materializer: Materializer = implicitly
   implicit val executor: ExecutionContextExecutor
 
   val failLevel: Logging.LogLevel =
@@ -37,7 +37,7 @@ trait RestClient {
       retryConfig: RetryConfig = defaultRetryConfig
   ): Source[ByteString, NotUsed] = {
     Source
-      .fromFuture(runRaw(request, retryConfig).map(_.entity.dataBytes))
+      .future(runRaw(request, retryConfig).map(_.entity.dataBytes))
       .flatMapConcat(identity)
   }
 
