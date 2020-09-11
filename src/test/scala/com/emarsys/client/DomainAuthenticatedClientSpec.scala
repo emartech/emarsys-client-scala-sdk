@@ -15,8 +15,8 @@ class DomainAuthenticatedClientSpec extends AnyWordSpecLike with Matchers {
   implicit val exe = sys.dispatcher
 
   trait Scope extends DomainAuthenticatedClient {
-    override val system       = sys
-    override val executor     = exe
+    override val system   = sys
+    override val executor = exe
 
     override val escherConfig = new EscherConfig(ConfigFactory.load().getConfig("ems-api.escher"))
 

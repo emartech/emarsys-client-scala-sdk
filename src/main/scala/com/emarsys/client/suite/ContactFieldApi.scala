@@ -63,8 +63,8 @@ object ContactFieldApi {
 
   def apply(eConfig: EscherConfig)(implicit sys: ActorSystem, ex: ExecutionContextExecutor) =
     new SuiteClient with ContactFieldApi {
-      implicit override val system       = sys
-      implicit override val executor     = ex
-      override val escherConfig          = eConfig
+      implicit override val system   = sys
+      implicit override val executor = ex
+      override val escherConfig      = eConfig
     }
 }

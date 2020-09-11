@@ -28,9 +28,9 @@ object ContactApi {
       ex: ExecutionContextExecutor
   ): ContactApi = {
     new SuiteClient with ContactApi {
-      implicit override val system       = sys
-      implicit override val executor     = ex
-      override val escherConfig          = eConfig
+      implicit override val system   = sys
+      implicit override val executor = ex
+      override val escherConfig      = eConfig
     }
   }
 }

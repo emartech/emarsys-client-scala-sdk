@@ -14,8 +14,8 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
 
 class ContactApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
-  implicit val system       = ActorSystem("contact-api-test-system")
-  implicit val executor     = system.dispatcher
+  implicit val system   = ActorSystem("contact-api-test-system")
+  implicit val executor = system.dispatcher
 
   val escherConfig = new EscherConfig(ConfigFactory.load().getConfig("ems-api.escher"))
 
@@ -25,9 +25,9 @@ class ContactApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
         response: HttpResponse
     )(implicit sys: ActorSystem, ex: ExecutionContextExecutor) =
       new SuiteClient with ContactApi {
-        implicit override val system       = sys
-        implicit override val executor     = ex
-        override val escherConfig          = eConfig
+        implicit override val system   = sys
+        implicit override val executor = ex
+        override val escherConfig      = eConfig
 
         override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = Future.successful(response)
       }

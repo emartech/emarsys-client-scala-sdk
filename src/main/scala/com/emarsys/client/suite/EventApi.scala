@@ -91,9 +91,9 @@ object EventApi {
       ex: ExecutionContextExecutor
   ): EventApi = {
     new EventApi {
-      implicit override val system       = sys
-      implicit override val executor     = ex
-      override val escherConfig          = eConfig
+      implicit override val system   = sys
+      implicit override val executor = ex
+      override val escherConfig      = eConfig
     }
   }
 }

@@ -54,9 +54,9 @@ object SegmentRunApi {
       ex: ExecutionContextExecutor
   ): SegmentRunApi = {
     new SuiteClient with SegmentRunApi {
-      implicit override val system       = sys
-      implicit override val executor     = ex
-      override val escherConfig          = eConfig
+      implicit override val system   = sys
+      implicit override val executor = ex
+      override val escherConfig      = eConfig
     }
   }
 }

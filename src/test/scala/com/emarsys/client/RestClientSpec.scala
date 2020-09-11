@@ -16,11 +16,15 @@ import scala.util.{Failure, Try}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
-class RestClientSpec extends TestKit(ActorSystem("RestClientSpec")) with AnyWordSpecLike with Matchers with ScalaFutures {
+class RestClientSpec
+    extends TestKit(ActorSystem("RestClientSpec"))
+    with AnyWordSpecLike
+    with Matchers
+    with ScalaFutures {
   self =>
 
-  val timeout      = 3.seconds
-  val url          = "http://test.example.com/testEndpoint"
+  val timeout = 3.seconds
+  val url     = "http://test.example.com/testEndpoint"
 
   trait Scope extends RestClient {
     implicit override val system: ActorSystem                = self.system

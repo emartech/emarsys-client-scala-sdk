@@ -14,8 +14,8 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
 
 class SegmentRunApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
-  implicit val system       = ActorSystem("segment-run-api-test-system")
-  implicit val executor     = system.dispatcher
+  implicit val system   = ActorSystem("segment-run-api-test-system")
+  implicit val executor = system.dispatcher
 
   val escherConfig       = new EscherConfig(ConfigFactory.load().getConfig("ems-api.escher"))
   val customerId         = 215526938
@@ -121,9 +121,9 @@ object TestSegmentRunApi {
       ex: ExecutionContextExecutor
   ) =
     new SuiteClient with SegmentRunApi {
-      implicit override val system       = sys
-      implicit override val executor     = ex
-      override val escherConfig          = eConfig
+      implicit override val system   = sys
+      implicit override val executor = ex
+      override val escherConfig      = eConfig
 
       override protected def sendRequest(request: HttpRequest): Future[HttpResponse] = Future.successful(response)
     }
@@ -136,9 +136,9 @@ object TestSegmentRunApiForceRenew {
       ex: ExecutionContextExecutor
   ) =
     new SuiteClient with SegmentRunApi {
-      implicit override val system       = sys
-      implicit override val executor     = ex
-      override val escherConfig          = eConfig
+      implicit override val system   = sys
+      implicit override val executor = ex
+      override val escherConfig      = eConfig
 
       override protected def sendRequest(request: HttpRequest): Future[HttpResponse] =
         Future.successful(
@@ -163,9 +163,9 @@ object TestSegmentRunApiNoRenew {
       ex: ExecutionContextExecutor
   ) =
     new SuiteClient with SegmentRunApi {
-      implicit override val system       = sys
-      implicit override val executor     = ex
-      override val escherConfig          = eConfig
+      implicit override val system   = sys
+      implicit override val executor = ex
+      override val escherConfig      = eConfig
 
       override protected def sendRequest(request: HttpRequest): Future[HttpResponse] =
         Future.successful(
