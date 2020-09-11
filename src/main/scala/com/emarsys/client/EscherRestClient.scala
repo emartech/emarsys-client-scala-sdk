@@ -30,15 +30,14 @@ trait EscherRestClient extends RestClient with EscherDirectives {
       serviceName: String,
       headers: List[String] = Nil,
       retryConfig: RetryConfig = defaultRetryConfig
-  )(
-      implicit um: Unmarshaller[ResponseEntity, S]
+  )(implicit
+      um: Unmarshaller[ResponseEntity, S]
   ): Future[S] = {
     runRawSigned(request, serviceName, headers, retryConfig).flatMap { response =>
-      Unmarshal(response.entity).to[S].recoverWith {
-        case err: DeserializationException =>
-          Unmarshal(response.entity).to[String].flatMap { body =>
-            Future.failed(InvalidResponseFormatException(err.getMessage, body, err))
-          }
+      Unmarshal(response.entity).to[S].recoverWith { case err: DeserializationException =>
+        Unmarshal(response.entity).to[String].flatMap { body =>
+          Future.failed(InvalidResponseFormatException(err.getMessage, body, err))
+        }
       }
     }
   }

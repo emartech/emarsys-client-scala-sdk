@@ -59,8 +59,7 @@ object SegmentApi {
   val createTransformer: SuiteRawResponse[CreateRawResponseData] => CreateResponse =
     r => CreateResponse(r.data.id.toInt)
 
-  def apply(eConfig: EscherConfig)(
-      implicit
+  def apply(eConfig: EscherConfig)(implicit
       sys: ActorSystem,
       ex: ExecutionContextExecutor
   ): SegmentApi = {

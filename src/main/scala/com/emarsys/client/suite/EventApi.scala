@@ -47,11 +47,10 @@ trait EventApi extends SuiteClient {
 
   private def convertToTriggerErrors(errorData: Map[String, Map[String, String]]) = {
     errorData
-      .map {
-        case (externalId, errors) =>
-          errors.headOption.map {
-            case (errorCode, errorMessage) => TriggerError(externalId, errorCode, errorMessage)
-          }
+      .map { case (externalId, errors) =>
+        errors.headOption.map { case (errorCode, errorMessage) =>
+          TriggerError(externalId, errorCode, errorMessage)
+        }
       }
       .toList
       .flatten
@@ -85,8 +84,7 @@ object EventApi {
 
   case class ExternalEventTriggerContact(externalId: String, data: Option[JsValue])
 
-  def apply(eConfig: EscherConfig)(
-      implicit
+  def apply(eConfig: EscherConfig)(implicit
       sys: ActorSystem,
       ex: ExecutionContextExecutor
   ): EventApi = {

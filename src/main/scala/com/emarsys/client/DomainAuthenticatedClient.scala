@@ -36,8 +36,7 @@ trait DomainAuthenticatedClient extends EscherRestClient {
 }
 
 object DomainAuthenticatedClient {
-  def apply(eConfig: EscherConfig)(
-      implicit
+  def apply(eConfig: EscherConfig)(implicit
       sys: ActorSystem,
       ex: ExecutionContextExecutor
   ): DomainAuthenticatedClient = {

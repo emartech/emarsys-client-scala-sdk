@@ -48,8 +48,7 @@ object SegmentRunApi {
   final case class SegmentRunResult(runId: String, status: String, result: Option[ContactListDetails])
   final case class ContactListDetails(contactListId: Int, userCount: Int, optInCount: Int, duration: Int)
 
-  def apply(eConfig: EscherConfig)(
-      implicit
+  def apply(eConfig: EscherConfig)(implicit
       sys: ActorSystem,
       ex: ExecutionContextExecutor
   ): SegmentRunApi = {

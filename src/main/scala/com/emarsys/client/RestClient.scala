@@ -41,15 +41,14 @@ trait RestClient {
       .flatMapConcat(identity)
   }
 
-  protected def run[S](request: HttpRequest, retryConfig: RetryConfig = defaultRetryConfig)(
-      implicit um: Unmarshaller[ResponseEntity, S]
+  protected def run[S](request: HttpRequest, retryConfig: RetryConfig = defaultRetryConfig)(implicit
+      um: Unmarshaller[ResponseEntity, S]
   ): Future[S] = {
     runRaw(request, retryConfig).flatMap { response =>
-      Unmarshal(response.entity).to[S].recoverWith {
-        case err: DeserializationException =>
-          Unmarshal(response.entity).to[String].flatMap { body =>
-            Future.failed(InvalidResponseFormatException(err.getMessage, body, err))
-          }
+      Unmarshal(response.entity).to[S].recoverWith { case err: DeserializationException =>
+        Unmarshal(response.entity).to[String].flatMap { body =>
+          Future.failed(InvalidResponseFormatException(err.getMessage, body, err))
+        }
       }
     }
   }
@@ -101,8 +100,8 @@ trait RestClient {
       else FailureResponse(response)
     }
 
-    def wrapException: PartialFunction[Throwable, RequestResult] = {
-      case NonFatal(exception) => RequestException(exception)
+    def wrapException: PartialFunction[Throwable, RequestResult] = { case NonFatal(exception) =>
+      RequestException(exception)
     }
 
     def handleFailedResponse(retriesLeft: Int, failureResponse: FailureResponse) = {
