@@ -25,7 +25,7 @@ trait EscherRestClient extends RestClient with EscherDirectives {
       .flatMapConcat(identity)
   }
 
-  protected def runSigned[S](
+  def runSigned[S](
       request: HttpRequest,
       serviceName: String,
       headers: List[String] = Nil,
@@ -42,7 +42,7 @@ trait EscherRestClient extends RestClient with EscherDirectives {
     }
   }
 
-  protected def runRawSigned(
+  def runRawSigned(
       request: HttpRequest,
       serviceName: String,
       headers: List[String],
