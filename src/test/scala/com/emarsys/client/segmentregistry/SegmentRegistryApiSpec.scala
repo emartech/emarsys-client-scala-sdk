@@ -310,9 +310,12 @@ class SegmentRegistryApiSpec
             if validPath(uri)(s"customers/$invalidDateFormatCustomerId/segments") =>
           respondWithInvalidDate
 
-        case HttpRequest(HttpMethods.GET, uri, _, _, _)
-          if validPath(uri)(s"customers/$customerId/segments") =>
-          HttpResponse(StatusCodes.OK, entity= HttpEntity(ContentTypes.`application/json`, List(validResponseWithMandatoryData).toJson.compactPrint) )
+        case HttpRequest(HttpMethods.GET, uri, _, _, _) if validPath(uri)(s"customers/$customerId/segments") =>
+          HttpResponse(
+            StatusCodes.OK,
+            entity =
+              HttpEntity(ContentTypes.`application/json`, List(validResponseWithMandatoryData).toJson.compactPrint)
+          )
       }
     )
 
