@@ -72,7 +72,28 @@ class SegmentRegistryApiSpec
     Some(true)
   )
 
+  private val validResponseWithMandatoryData = {
+    SegmentRegistryRecord(
+      id = mandatoryOnlySegmentId,
+      originalId = mandatoryOnlySegmentId,
+      customerId = customerId,
+      segmentType = "normal",
+      name = "segment name",
+      created = segmentCreated,
+      updated = segmentCreated,
+      criteriaTypes = List(),
+      baseContactListId = 1,
+      predefined = false
+    )
+  }
+
   "SegmentRegistryApi" should {
+    "list segments" in {
+      list(customerId).map {
+        _ shouldBe List(validResponseWithMandatoryData)
+      }
+    }
+
     "update responds with segment record" when {
       "proper segment data is sent" in {
         update(customerId, segmentData).map {
@@ -172,21 +193,6 @@ class SegmentRegistryApiSpec
         }
       }
     }
-  }
-
-  private val validResponseWithMandatoryData = {
-    SegmentRegistryRecord(
-      id = mandatoryOnlySegmentId,
-      originalId = mandatoryOnlySegmentId,
-      customerId = customerId,
-      segmentType = "normal",
-      name = "segment name",
-      created = segmentCreated,
-      updated = segmentCreated,
-      criteriaTypes = List(),
-      baseContactListId = 1,
-      predefined = false
-    )
   }
 
   override protected def afterAll(): Unit = {
@@ -303,6 +309,13 @@ class SegmentRegistryApiSpec
         case HttpRequest(HttpMethods.POST, uri, _, _, _)
             if validPath(uri)(s"customers/$invalidDateFormatCustomerId/segments") =>
           respondWithInvalidDate
+
+        case HttpRequest(HttpMethods.GET, uri, _, _, _) if validPath(uri)(s"customers/$customerId/segments") =>
+          HttpResponse(
+            StatusCodes.OK,
+            entity =
+              HttpEntity(ContentTypes.`application/json`, List(validResponseWithMandatoryData).toJson.compactPrint)
+          )
       }
     )
 

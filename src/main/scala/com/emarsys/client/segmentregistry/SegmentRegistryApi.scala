@@ -30,6 +30,15 @@ trait SegmentRegistryApi extends EscherRestClient {
     )
   }
 
+  def list(customerId: Int): Future[List[SegmentRegistryRecord]] = {
+    runSigned[List[SegmentRegistryRecord]](
+      RequestBuilding.Get(Uri(baseUrl + path(customerId))),
+      serviceName,
+      Nil,
+      retryConfig
+    )
+  }
+
   def update(customerId: Int, segmentData: SegmentData): Future[SegmentRegistryRecord] = {
     runSigned[SegmentRegistryRecord](
       RequestBuilding.Put(Uri(baseUrl + path(customerId)), segmentData),
