@@ -3,6 +3,7 @@ package com.emarsys.formats
 import com.emarsys.client.suite.SuiteClient.SuiteRawResponse
 import com.emarsys.client.suite.DataTransformers._
 import com.emarsys.client.suite.ContactFieldApi._
+import com.emarsys.client.suite.ContactListApi.ContactList
 import com.emarsys.client.suite.SegmentApi._
 import com.emarsys.client.suite.SegmentRunApi._
 import spray.json._
@@ -64,4 +65,7 @@ object SuiteSdkFormats extends DefaultJsonProtocol {
   // SegmentRunApi
   implicit val contactListDetailsRawF: JsonFormat[ContactListDetailsRaw] = jsonFormat4(ContactListDetailsRaw.apply)
   implicit val segmentRunResultRawF: JsonFormat[SegmentRunResultRaw]     = jsonFormat3(SegmentRunResultRaw.apply)
+
+  // ContactListApi
+  implicit val contactListF: JsonFormat[ContactList] = jsonFormat4(ContactList.apply)
 }
