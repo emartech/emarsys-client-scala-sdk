@@ -22,7 +22,7 @@ libraryDependencies ++= {
   )
 }
 
-addCompilerPlugin("io.tryp" % "splain" % "0.5.7" cross CrossVersion.patch)
+addCompilerPlugin("io.tryp" % "splain" % "0.5.8" cross CrossVersion.patch)
 
 scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
 
