@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/emartech/emarsys-client-scala-sdk.svg?branch=master)](https://travis-ci.org/emartech/emarsys-client-scala-sdk)
+[![Build Status](https://github.com/emartech/emarsys-client-scala-sdk/workflows/CI/badge.svg)](https://github.com/emartech/emarsys-client-scala-sdk/actions?query=workflow%3ACI) 
 [![Maven Central](https://img.shields.io/maven-central/v/com.emarsys/emarsys-client-scala-sdk_2.12.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.emarsys%22%20AND%20a:%22emarsys-client-scala-sdk_2.12%22)
 
 # emarsys-client-scala-sdk

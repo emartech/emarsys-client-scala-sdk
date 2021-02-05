@@ -5,9 +5,9 @@ crossScalaVersions := List("2.13.3", "2.12.12")
 scalacOptions := scalacOptionsFor(scalaVersion.value)
 
 libraryDependencies ++= {
-  val akkaHttpV  = "10.2.0"
-  val akkaV      = "2.6.9"
-  val scalaTestV = "3.2.2"
+  val akkaHttpV  = "10.2.3"
+  val akkaV      = "2.6.12"
+  val scalaTestV = "3.2.3"
   Seq(
     "com.typesafe.akka"     %% "akka-http-core"       % akkaHttpV,
     "com.typesafe.akka"     %% "akka-http"            % akkaHttpV,
@@ -16,13 +16,13 @@ libraryDependencies ++= {
     "com.typesafe.akka"     %% "akka-stream-testkit"  % akkaV % Test,
     "org.scalatest"         %% "scalatest"            % scalaTestV % Test,
     "com.emarsys"           %% "escher-akka-http"     % "1.3.3",
-    "joda-time"             % "joda-time"             % "2.10.6",
+    "joda-time"             % "joda-time"             % "2.10.9",
     "org.joda"              % "joda-convert"          % "2.2.1",
-    "com.github.pureconfig" %% "pureconfig"           % "0.13.0"
+    "com.github.pureconfig" %% "pureconfig"           % "0.14.0"
   )
 }
 
-addCompilerPlugin("io.tryp" % "splain" % "0.5.7" cross CrossVersion.patch)
+addCompilerPlugin("io.tryp" % "splain" % "0.5.8" cross CrossVersion.patch)
 
 scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
 
