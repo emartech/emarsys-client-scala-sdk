@@ -1,6 +1,6 @@
 organization := "com.emarsys"
 name := "emarsys-client-scala-sdk"
-crossScalaVersions := List("2.13.3", "2.12.12")
+crossScalaVersions := List("2.13.5", "2.12.13")
 
 scalacOptions := scalacOptionsFor(scalaVersion.value)
 
