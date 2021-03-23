@@ -6,8 +6,8 @@ scalacOptions := scalacOptionsFor(scalaVersion.value)
 
 libraryDependencies ++= {
   val akkaHttpV  = "10.2.4"
-  val akkaV      = "2.6.12"
-  val scalaTestV = "3.2.3"
+  val akkaV      = "2.6.13"
+  val scalaTestV = "3.2.6"
   Seq(
     "com.typesafe.akka"     %% "akka-http-core"       % akkaHttpV,
     "com.typesafe.akka"     %% "akka-http"            % akkaHttpV,
@@ -18,7 +18,7 @@ libraryDependencies ++= {
     "com.emarsys"           %% "escher-akka-http"     % "1.3.4",
     "joda-time"             % "joda-time"             % "2.10.10",
     "org.joda"              % "joda-convert"          % "2.2.1",
-    "com.github.pureconfig" %% "pureconfig"           % "0.14.0"
+    "com.github.pureconfig" %% "pureconfig"           % "0.14.1"
   )
 }
 
