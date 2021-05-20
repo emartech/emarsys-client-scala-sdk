@@ -22,7 +22,7 @@ object SegmentRegistryFormats extends DefaultJsonProtocol {
     }
   }
 
-  implicit val segmentCreatePayloadF: RootJsonFormat[SegmentCreatePayload]   = jsonFormat7(SegmentCreatePayload.apply)
+  implicit val segmentCreatePayloadF: RootJsonFormat[SegmentCreatePayload]   = jsonFormat9(SegmentCreatePayload.apply)
   implicit val segmentRegistryRecordF: RootJsonFormat[SegmentRegistryRecord] = jsonFormat10(SegmentRegistryRecord.apply)
-  implicit val segmentDataF: RootJsonFormat[SegmentData]                     = jsonFormat7(SegmentData.apply)
+  implicit val segmentDataF: RootJsonFormat[SegmentData]                     = jsonFormat8(SegmentData.apply)
 }
