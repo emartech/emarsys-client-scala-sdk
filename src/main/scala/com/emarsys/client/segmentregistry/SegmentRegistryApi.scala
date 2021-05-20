@@ -79,7 +79,8 @@ object SegmentRegistryApi {
       criteriaTypes: Option[Seq[String]] = None,
       baseContactListId: Option[Int] = None,
       predefined: Option[Boolean] = None,
-      predefinedSegmentId: Option[String] = None
+      predefinedSegmentId: Option[String] = None,
+      updated: Option[DateTime] = None
   )
   case class SegmentCreatePayload(
       id: Option[Int],
@@ -88,8 +89,10 @@ object SegmentRegistryApi {
       criteriaTypes: Option[Seq[String]] = None,
       baseContactListId: Option[Int] = None,
       predefined: Option[Boolean] = None,
-      predefinedSegmentId: Option[String] = None
-  )
+      predefinedSegmentId: Option[String] = None,
+      created: Option[DateTime] = None,
+      updated: Option[DateTime] = None
+     )
 
   case class SegmentRegistryRecord(
       id: Int,
