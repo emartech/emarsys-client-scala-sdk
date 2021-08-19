@@ -13,8 +13,10 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 
 trait ContactListApi extends SuiteClient {
 
-  def contactLists(customerId: Int,
-                   retryConfig: Config.RetryConfig = defaultRetryConfig.copy(maxRetries = 0)): Future[List[ContactList]] = {
+  def contactLists(
+      customerId: Int,
+      retryConfig: Config.RetryConfig = defaultRetryConfig.copy(maxRetries = 0)
+  ): Future[List[ContactList]] = {
 
     val path    = "contactlist"
     val request = RequestBuilding.Get(Uri(baseUrl(customerId) + path))

@@ -92,7 +92,7 @@ object SegmentRegistryApi {
       predefinedSegmentId: Option[String] = None,
       created: Option[DateTime] = None,
       updated: Option[DateTime] = None
-     )
+  )
 
   case class SegmentRegistryRecord(
       id: Int,

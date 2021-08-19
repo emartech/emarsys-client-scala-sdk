@@ -42,7 +42,7 @@ class SegmentApiSpec extends AsyncWordSpec with Matchers with ScalaFutures {
       "return with valid response" in {
         val contactCriteriaLeaf  = ContactCriteriaLeaf("criteria", Right("email"), "contains", "@gmail.com")
         val behaviorCriteriaLeaf = BehaviorCriteriaLeaf("criteria")
-        val payloadOneLeaf       = CreateRequest("segment", Some(contactCriteriaLeaf), Some(behaviorCriteriaLeaf), "", None)
+        val payloadOneLeaf = CreateRequest("segment", Some(contactCriteriaLeaf), Some(behaviorCriteriaLeaf), "", None)
 
         segmentApi(StatusCodes.OK, createdResponse)
           .create(customerId, payloadOneLeaf)
