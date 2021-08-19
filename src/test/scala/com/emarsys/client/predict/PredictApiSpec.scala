@@ -23,12 +23,12 @@ class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with 
 
   val escherConfig = new EscherConfig(ConfigFactory.load().getConfig("ems-api.escher"))
 
-  val emailHash              = "email hash"
-  val secret                 = "secret"
-  val auth                   = "auth"
-  val unauthorizedResponse   = """{"replyCode":1,"replyText":"Unauthorized","data":""}"""
-  val invalidJsonResponse    = """invalid json"""
-  val emptyProductResponse   = """{"products": {}}"""
+  val emailHash            = "email hash"
+  val secret               = "secret"
+  val auth                 = "auth"
+  val unauthorizedResponse = """{"replyCode":1,"replyText":"Unauthorized","data":""}"""
+  val invalidJsonResponse  = """invalid json"""
+  val emptyProductResponse = """{"products": {}}"""
   val invalidProductResponse = """{
                                  |    "products": {
                                  |        "invalid": {
@@ -55,7 +55,7 @@ class PredictApiSpec extends AsyncWordSpec with Matchers with ScalaFutures with 
                                |    "session": "179C9E00A32028C",
                                |    "visitor": "4330136DDC76BD77"
                                |}""".stripMargin
-  val validProduct   = """{
+  val validProduct = """{
                               |  "2129": {
                               |    "title": "LSL Women Hat 60s Hat",
                               |    "image": "http://lifestylelabels.com/pub/media/catalog/product/w/h/wh001.jpg"

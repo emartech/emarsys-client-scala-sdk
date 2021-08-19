@@ -36,7 +36,7 @@ class ContactFieldApiSpec extends AsyncWordSpec with Matchers with ScalaFutures 
   val customerId        = 123
   val invalidResponse   = "invalid"
   val emptyDataResponse = """{"replyCode":1,"replyText":"Unauthorized","data":""}"""
-  val validResponse     = """{
+  val validResponse = """{
                         |  "replyCode": 0,
                         |  "replyText": "OK",
                         |  "data": [
