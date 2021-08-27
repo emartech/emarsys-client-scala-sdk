@@ -73,3 +73,16 @@ jobs:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
         SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
         SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+
+  merge:
+    name: Merge dependency update
+    if: github.actor == 'ema-bot' && github.event_name == 'pull_request'
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+    - name: merge PR
+      uses: desbo/merge-pr-action@v0
+      with:
+        GITHUB_TOKEN: ${{ secrets.PR_MERGE_ACCESS_TOKEN }}
+        ALLOWED_UPDATE: minor
+        MERGE_METHOD: squash
