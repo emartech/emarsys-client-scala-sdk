@@ -16,7 +16,7 @@ libraryDependencies ++= {
     "com.typesafe.akka"     %% "akka-stream-testkit"  % akkaV      % Test,
     "org.scalatest"         %% "scalatest"            % scalaTestV % Test,
     "com.emarsys"           %% "escher-akka-http"     % "1.3.9",
-    "joda-time"              % "joda-time"            % "2.10.12",
+    "joda-time"              % "joda-time"            % "2.10.13",
     "org.joda"               % "joda-convert"         % "2.2.1",
     "com.github.pureconfig" %% "pureconfig"           % "0.17.0"
   )
