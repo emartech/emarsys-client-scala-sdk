@@ -17,7 +17,7 @@ libraryDependencies ++= {
     "org.scalatest"         %% "scalatest"            % scalaTestV % Test,
     "com.emarsys"           %% "escher-akka-http"     % "1.3.11",
     "joda-time"              % "joda-time"            % "2.10.13",
-    "org.joda"               % "joda-convert"         % "2.2.1",
+    "org.joda"               % "joda-convert"         % "2.2.2",
     "com.github.pureconfig" %% "pureconfig"           % "0.17.1"
   )
 }
