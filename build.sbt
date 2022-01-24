@@ -7,7 +7,7 @@ scalacOptions := scalacOptionsFor(scalaVersion.value)
 libraryDependencies ++= {
   val akkaHttpV  = "10.2.7"
   val akkaV      = "2.6.17"
-  val scalaTestV = "3.2.10"
+  val scalaTestV = "3.2.11"
   Seq(
     "com.typesafe.akka"     %% "akka-http-core"       % akkaHttpV,
     "com.typesafe.akka"     %% "akka-http"            % akkaHttpV,
