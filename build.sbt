@@ -1,13 +1,13 @@
 organization       := "com.emarsys"
 name               := "emarsys-client-scala-sdk"
-crossScalaVersions := List("2.13.7", "2.12.15")
+crossScalaVersions := List("2.13.8", "2.12.15")
 
 scalacOptions := scalacOptionsFor(scalaVersion.value)
 
 libraryDependencies ++= {
+  val akkaV      = "2.6.18"
   val akkaHttpV  = "10.2.7"
-  val akkaV      = "2.6.17"
-  val scalaTestV = "3.2.10"
+  val scalaTestV = "3.2.11"
   Seq(
     "com.typesafe.akka"     %% "akka-http-core"       % akkaHttpV,
     "com.typesafe.akka"     %% "akka-http"            % akkaHttpV,
@@ -17,7 +17,7 @@ libraryDependencies ++= {
     "org.scalatest"         %% "scalatest"            % scalaTestV % Test,
     "com.emarsys"           %% "escher-akka-http"     % "1.3.11",
     "joda-time"              % "joda-time"            % "2.10.13",
-    "org.joda"               % "joda-convert"         % "2.2.1",
+    "org.joda"               % "joda-convert"         % "2.2.2",
     "com.github.pureconfig" %% "pureconfig"           % "0.17.1"
   )
 }
