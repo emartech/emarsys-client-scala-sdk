@@ -83,6 +83,6 @@ jobs:
     - name: merge PR
       uses: desbo/merge-pr-action@v0
       with:
-        GITHUB_TOKEN: ${{ secrets.PR_MERGE_ACCESS_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.EMA_BOT }}
         ALLOWED_UPDATE: minor
         MERGE_METHOD: squash
