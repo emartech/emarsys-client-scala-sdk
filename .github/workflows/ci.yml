@@ -86,3 +86,14 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.EMA_BOT }}
         ALLOWED_UPDATE: minor
         MERGE_METHOD: squash
+
+  release:
+    name: Release
+    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && github.actor == 'ema-bot'
+    needs: [ build ]
+    uses: ./.github/workflows/autorelease.yaml
+    secrets:
+      release_token: ${{ secrets.EMA_BOT }}
+      notification_webhook_url: ${{ secrets.RD_BUILD_NOTIFICATION_SLACK_WEBHOOK_URL }}
+
+

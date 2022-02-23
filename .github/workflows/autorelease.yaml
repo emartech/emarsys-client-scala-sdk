@@ -1,0 +1,138 @@
+name: Release
+
+on:
+  workflow_call:
+    inputs:
+      accepted_author_email:
+        type: string
+        required: false
+        description: Email of the commit author to allow
+        default: security@emarsys.com
+    secrets:
+      release_token:
+        required: true
+        description: Personal access token used to create the release
+      notification_webhook_url:
+        required: true
+        description: URL to use to send notifications to slack
+
+env:
+  accepted_author_email: ${{ inputs.accepted_author_email }}
+
+jobs:
+  preflight_checks:
+    name: Preflight checks
+    runs-on: ubuntu-20.04
+    outputs:
+      should_release: ${{ steps.check.outputs.should_release }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - id: check
+        name: Preflight check
+        run: |
+          should_release=true
+          git log $(git describe --abbrev=0 --tags)..HEAD --pretty='format:%ae' |
+          {
+            while read author_email; do 
+              if [[ "$author_email" != "$accepted_author_email" ]]; then
+                echo -e "Found commit by \e[31m${author_email}\e[39m, cancelling release. Only commits by \e[32m${accepted_author_email}\e[39m may be released automatically."
+                should_release=false
+                break
+              fi 
+            done
+            if [[ "$should_release" == "true" ]]; then
+              echo -e "Preflight check \e[32msuccessfull\e[39m, proceeding with release."
+            fi
+            echo "::set-output name=should_release::$should_release"
+          }
+
+  release:
+    name: Create Release
+    needs: [ preflight_checks ]
+    runs-on: ubuntu-20.04
+    if: needs.preflight_checks.outputs.should_release == 'true'
+    outputs:
+      next_version: ${{ steps.calculate_next_version.outputs.next_version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Calculate next version
+        id: calculate_next_version
+        run: |
+          current_version=$(git describe --abbrev=0 --tags)
+          if [[ -z "$current_version" ]]; then
+            echo "Failed to retrieve current version"
+            exit 1
+          fi
+          echo -e "Current version: \e[34m${current_version}\e[39m"
+          
+          next_version=$(echo $current_version | sed -r 's/(.*v[0-9]+\.[0-9]+\.)([0-9]+)/echo "\1$((\2 + 1))"/ge')
+          if [[ -z "$next_version" ]] || [[ "$current_version" == "$next_version" ]]; then
+            echo "Failed to calculate next version"
+            exit 1
+          fi
+
+          echo -e "Next version: \e[34m${next_version}\e[39m"
+          echo "::set-output name=next_version::$next_version"
+
+          commits=$(git log $(git describe --abbrev=0 --tags)..HEAD --pretty='format:%s' | sed -r "s/CDP\-[0-9]+: //;s/^/* /")
+          echo "Commits being released:
+          $commits
+          "
+          commits_json=$(echo "$commits" | jq --raw-input --slurp '.')
+          echo "::set-output name=commits::$commits_json"
+
+      - name: Create Release
+        id: create_release
+        if: steps.calculate_next_version.outputs.next_version
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ steps.calculate_next_version.outputs.next_version }}
+          release_name: ${{ steps.calculate_next_version.outputs.next_version }} - Automatic dependency updates
+          body: ${{ fromJSON(steps.calculate_next_version.outputs.commits) }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.release_token }}
+
+  send_notification:
+    name: Send notifications
+    needs: [ release, preflight_checks ]
+    if: needs.preflight_checks.outputs.should_release == 'true'
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Calculate repository name
+        id: calculate_repository_name
+        run: |
+          repository_name=$(echo "$GITHUB_REPOSITORY" | sed -r "s/.*\///") 
+          echo "::set-output name=repository_name::$repository_name"
+
+      - name: Send slack message on failure
+        if: failure()
+        run: |
+          repo_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          action_url="$repo_url/actions/runs/$GITHUB_RUN_ID"
+          failure_message=":x: Autorelease for <$repo_url|${{ steps.calculate_repository_name.outputs.repository_name }}> on GitHub Actions has failed.
+          See: $action_url"
+          
+          curl -X POST -H "Content-Type:application/json" -d "{\"text\":\"$failure_message\"}" ${{ secrets.notification_webhook_url}}
+
+      - name: Send slack message on success
+        if: success()
+        run: |
+          repo_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          release_url="$repo_url/releases/tag/${{ needs.release.outputs.next_version }}"
+          action_url="$repo_url/actions/runs/$GITHUB_RUN_ID"
+          success_message=":white_check_mark: Autorelease for <$repo_url|${{ steps.calculate_repository_name.outputs.repository_name }}> on GitHub Actions has succeeded. New version is <$release_url|${{ needs.release.outputs.next_version }}> 
+          See: $action_url"
+          
+          curl -X POST -H "Content-Type:application/json" -d "{\"text\":\"$success_message\"}" ${{ secrets.notification_webhook_url}}
