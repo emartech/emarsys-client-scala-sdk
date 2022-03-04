@@ -36,26 +36,28 @@ jobs:
         name: Preflight check
         run: |
           should_release=true
-                    
-          has_commits=false
+          commits_num_since_last_tag=0
+
           git log $(git describe --abbrev=0 --tags)..HEAD --pretty='format:%ae' |
           {
-            while read author_email; do
-              has_commits=true
+            # the last element won't contain a new line so read will return 0,
+            # which requires us to add an extra condition to catch the last line too
+            while read author_email || [[ -n "$author_email" ]]; do
+              commits_num_since_last_tag=$((commits_num_since_last_tag+1))
               if [[ "$author_email" != "$accepted_author_email" ]]; then
                 echo -e "Found commit by \e[31m${author_email}\e[39m, cancelling release. Only commits by \e[32m${accepted_author_email}\e[39m may be released automatically."
                 should_release=false
                 break
-              fi 
+              fi
             done
-          
-            if [[ "$should_release" == "true" ]] && [[ "$has_commits" == true ]]; then
-              echo -e "Preflight check \e[32msuccessfull\e[39m, proceeding with release."
-            elif [[ "$has_commits" == false ]]; then
+
+            if [[ "$should_release" == "true" ]] && [[ $commits_num_since_last_tag -gt 0 ]]; then
+              echo -e "Preflight check \e[32msuccessfull\e[39m, proceeding with release. Found $commits_num_since_last_tag new commit(s)."
+            elif [[ $commits_num_since_last_tag -eq 0 ]]; then
               echo -e "Preflight check \e[31mfailed\e[39m, no new commits to release."
               should_release=false
             fi
-            
+
             echo "::set-output name=should_release::$should_release"
           }
 
