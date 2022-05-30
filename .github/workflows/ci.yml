@@ -22,9 +22,10 @@ jobs:
         fetch-depth: 0
 
     - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v10
+      uses: coursier/setup-action@v1.2.0-M3
       with:
-        java-version: openjdk@1.11
+        jvm: zulu:11
+        apps: sbt
    
     - name: Cache sbt
       uses: actions/cache@v2
@@ -50,9 +51,10 @@ jobs:
         fetch-depth: 0
 
     - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v10
+      uses: coursier/setup-action@v1.2.0-M3
       with:
-        java-version: openjdk@1.11
+        jvm: zulu:11
+        apps: sbt
 
     - name: Cache sbt
       uses: actions/cache@v2
