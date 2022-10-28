@@ -1,5 +1,4 @@
-[![Build Status](https://github.com/emartech/emarsys-client-scala-sdk/workflows/CI/badge.svg)](https://github.com/emartech/emarsys-client-scala-sdk/actions?query=workflow%3ACI) 
-[![Maven Central](https://img.shields.io/maven-central/v/com.emarsys/emarsys-client-scala-sdk_2.12.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.emarsys%22%20AND%20a:%22emarsys-client-scala-sdk_2.12%22)
+# This repository is archived. Please migrate to [emarsys-scala-sdk:1.0.0](https://github.com/emartech/emarsys-scala-sdk/releases/tag/v1.0.0).
 
 # emarsys-client-scala-sdk
 
