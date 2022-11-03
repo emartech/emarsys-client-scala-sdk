@@ -1,4 +1,4 @@
-# This repository is archived. Please migrate to [emarsys-scala-sdk:1.0.0](https://github.com/emartech/emarsys-scala-sdk/releases/tag/v1.0.0).
+# This repository is archived. Please migrate to [emarsys-scala-akka-sdk](https://github.com/emartech/emarsys-scala-akka-sdk/releases).
 
 # emarsys-client-scala-sdk
 
